@@ -1,0 +1,5659 @@
+
+// Declarando Bibliotecas
+#include<math.h>
+#include<stdio.h>
+#include<string.h>
+#include<stdlib.h>
+#include<curses.h>
+#include<time.h>
+
+// Declarando Constantes
+#define iniciaLinha 1
+#define iniciaColuna 2
+#define linha 23
+#define coluna 76
+
+// Estruturas de dados
+typedef struct{
+	char nome[15];
+	int senha;
+}STR_USER;
+
+typedef struct{
+	char nome[31];
+	char cpf[12];
+	long int tel;
+	int status;
+}STR_CLIENTE;
+
+typedef struct{
+	char placa[8];
+	char modelo[17];
+	char marca[17];
+	int ano;
+	int km;
+	int limitekm;
+	float diaria;
+	float valorkm;
+	int status;
+}STR_VEICULO;
+
+typedef struct{
+	char placa[8];
+	char cpf[12];
+	char datasaida[14];
+	char dataentrega[14];
+	int diaslocados;
+	float valordiaria;
+	float valortotal;
+    int kminicial;
+}STR_LOCACAO;
+
+typedef struct{
+	char placa[8];
+	char cpf[12];
+	int diaslocadosextras;
+	float valormultadia;
+	int kmfinal;
+    int kminicial;
+    int kmlimite;
+    float valormultakm;
+    float totalanterior;
+    float totalfinal;
+}STR_DEVOLUCAO;
+
+// CabeÃ§alhos dos modulos
+   
+   // IMPRESSAO DE MENUS
+void destruirJanela(WINDOW *janela);
+void printTelaLOGIN(WINDOW *janela);
+void printMenuPrincipal(WINDOW *janela, int sombreamento);
+void printMenuCLIENTECRUD(WINDOW *janela, int sombreamento);
+void printMenuCLIENTELIXEIRA(WINDOW *janela, int sombreamento);
+void printMenuVEICULOCRUD(WINDOW *janela, int sombreamento);
+void printMenuRELATORIOS(WINDOW *janela, int sombreamento);
+
+	// IMPRESSAO DE TELAS DOS MENUS
+void printTelaCadastrarCLIENTE(WINDOW *janela);
+void printTelaPesquisarCLIENTE(WINDOW *janela);
+void printTelaExcluirCLIENTE(WINDOW *janela);
+void printTelaEditarCLIENTE(WINDOW *janela);
+void printTelaLixeiraRESTAURARCLIENTE(WINDOW *janela);
+void printTelaLixeiraESVAZIARCLIENTE(WINDOW *janela);
+void printTelaRelatorioClientesEXCLUIDOS(WINDOW *janela);
+void printTelaRelatorioClientesATIVOS(WINDOW *janela);
+void printTelaRelatorioClientes(WINDOW *janela);
+void printTelaRelatorioVeiculosEXCLUIDOS(WINDOW *janela);
+void printTelaRelatorioVeiculosATIVOS(WINDOW *janela);
+void printTelaRelatorioVeiculos(WINDOW *janela);
+void printTelaRelatorioLocados(WINDOW *janela);
+
+void printTelaCadastrarVEICULO(WINDOW *janela);
+void printTelaPesquisarVEICULO(WINDOW *janela);
+void printTelaExcluirVEICULO(WINDOW *janela);
+void printTelaEditarVEICULO(WINDOW *janela);
+void printTelaLixeiraRESTAURARVEICULO(WINDOW *janela);
+void printTelaLixeiraESVAZIARVEICULO(WINDOW *janela);
+void printTelaLOCACAO(WINDOW *janela);
+void printTelaDEVOLUCAO(WINDOW *janela);
+
+	// LEITURA DE DADOS
+void scanStringComESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string);
+void scanStringSemESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string);
+void scanStringInteiroSemESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string);
+void scanStringInteiroComESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string);
+void scanLongInteiro(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, long int *inteiro);
+void scanInteiro(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, int *inteiro);
+void scanFloat(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, float *inteiro);
+
+	// IMPRESSAO DE ERROS E AVISOS
+void printMensagemERRO(WINDOW *janela, int posicaolinha, int posicaocoluna, char aviso[50]);
+void printMensagemSUCESSO(WINDOW *janela, int posicaolinha, int posicaocoluna, char aviso[50]);
+void printMensagemSUCESSONUMERO(WINDOW *janela, int posicaolinha, int posicaocoluna, float numero);
+
+	// IMPRESSAO DE DADOS
+void printDadosCLIENTEATIVO(WINDOW *janela, int posicao);
+void printDadosCLIENTEINATIVO(WINDOW *janela, int posicao);
+void printDadosVEICULO(WINDOW *janela, int posicao);
+void printDadosVEICULOINATIVO(WINDOW *janela, int posicao);
+void printDadosDEVOLUCAO(WINDOW *janela, int posicao);
+
+
+	// VERIFICACAO
+int buscarUSUARIO(char *nome);
+int buscarCPF(char *cpf);
+int validarCPF(char *cpf);
+int buscarPLACA(char *placa);
+int buscarLOCACAO(char *placa);
+int buscarStatusCLIENTE(int posicao);
+int buscarStatusVEICULO(int posicao);
+float buscarValorDiariaVEICULO(int posicao);
+float buscarKmInicialVEICULO(int posicao);
+float buscarMultaKmVEICULO(int posicao);
+float buscarLimiteKmVEICULO(int posicao);
+float buscarValorTotalLOCACAO(int posicao);
+float calculaValorTotalLOCACAO(float valordiaria, int diaslocados);
+float calcularValorTotalDEVOLUCAO(float totalanterior, int diasextras, float valormultadia, int kminicial, int kmfinal, int kmlimite, float valormultakm);
+void datasistema(char *datasistema);
+
+	// ALTERACAO DE DADOS
+void excluirCLIENTE(WINDOW *janela, int posicao);
+void editarCLIENTE(WINDOW *janela, int posicao);
+void restaurarCLIENTE(WINDOW *janela, int posicao);
+void esvaziarCLIENTE(WINDOW *janela, int posicao);
+void excluirVEICULO(WINDOW *janela, int posicao);
+void editarVEICULO(WINDOW *janela, int posicao);
+void restaurarVEICULO(WINDOW *janela, int posicao);
+void esvaziarVEICULO(WINDOW *janela, int posicao);
+void removerLOCACAO(WINDOW *janela, int posicao);
+void updateKmVEICULO(int posicao, int kmupdate);
+
+// Programa principal
+int main(void){
+	
+	// Declarando Variaveis
+	int tecla;
+	int sombreamento = 1;
+	int opcao;
+	int resultadoBuscaUSUARIO;
+	int resultadoBuscaCPF;
+	int resultadoValidaCPF;
+	int resultadoBuscaPLACA;
+	int resultadoBuscaStatusCLIENTE;
+	int resultadoBuscaStatusVEICULO;
+	int resultadoBuscaLOCACAO;
+	float resultadoValorDiariaVEICULO;
+	int resultadoValorKmInicialVEICULO;
+	float resultadoValorTotalLOCACAO;
+	float resultadoValorMultaKmVEICULO;
+	int resultadoLimiteKmVEICULO;
+	float resultadoBuscarValorTotalLOCACAO;
+
+	STR_USER USUARIO;
+	STR_CLIENTE CLIENTE;
+	STR_VEICULO VEICULO;
+	STR_LOCACAO LOCACAO;
+	STR_DEVOLUCAO DEVOLUCAO;
+	
+	// Declarando Janela Menu
+	WINDOW *janelaprincipal;
+	WINDOW *janelalogin;
+	
+	// Declarando Arquivo Logico
+	FILE *DBUSUARIO;
+	FILE *DBCLIENTE;
+	FILE *DBVEICULO;
+	FILE *DBLOCACAO;
+	FILE *DBDEVOLUCAO;
+	
+	// Iniciando Ncurses
+    initscr();
+	
+	// Iniciando Cores
+    start_color();
+    	
+	// Definindo tamanho da Janela Principal 
+    janelalogin = newwin(10,30,5,26);
+    
+    // Iniciando Setas & Caracteres do Ncurses
+    keypad(janelalogin,TRUE);
+    
+    // Printando tela LOGIN
+    printTelaLOGIN(janelalogin);
+    scanStringInteiroSemESPACO(janelalogin,6,9,2,10,USUARIO.nome);
+    scanInteiro(janelalogin,7,9,2,10,&USUARIO.senha);
+    
+    // Definindo arquivo fisico como leitura
+	DBUSUARIO = fopen("DBUSUARIO.TXT","a+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBUSUARIO == NULL){
+		DBUSUARIO = fopen("DBUSUARIO.TXT","w");
+	}
+    
+   // Gravando no arquivo
+	fwrite(&USUARIO, sizeof(USUARIO), 1, DBUSUARIO);
+	
+	// Fechando Arquivo
+	fclose(DBUSUARIO);
+    
+    // Buscando Usuario
+    resultadoBuscaUSUARIO = buscarUSUARIO(USUARIO.nome);
+   
+    if(resultadoBuscaUSUARIO != -10){
+	mvwprintw(janelalogin, 2, 3, "                          ");
+	mvwprintw(janelalogin, 3, 3, "  SEJA BEM VINDO %s  ",USUARIO.nome);
+	mvwprintw(janelalogin, 4, 3, "                          ");
+	wrefresh(janelalogin);
+	getchar();
+	
+    // Definindo tamanho da Janela Principal 
+    janelaprincipal = newwin(linha,coluna,iniciaLinha,iniciaColuna);
+	
+	// Iniciando Setas & Caracteres do Ncurses
+    keypad(janelaprincipal,TRUE);
+
+    // Iniciando Ciclo
+    do{
+		
+		// Chamando subrotina print menu principal
+		printMenuPrincipal(janelaprincipal, sombreamento);
+		
+		// Recebendo valor da tecla 
+		tecla = wgetch(janelaprincipal);
+		
+		// Condicionais
+		switch(tecla) {
+			
+		   // Se pressionar UP (Cima)
+           case KEY_UP:
+				if(sombreamento == 1)
+					sombreamento = 6;
+					else
+						sombreamento--;
+					break;
+					
+			// Se pressionar DOWN(Baixo)	
+            case KEY_DOWN:
+				if(sombreamento == 6)
+					sombreamento = 1;
+					else
+						sombreamento++;
+					break;
+				
+			// Se pressionar ENTER
+			case 10:
+				
+				// Recebendo opcao escolhida atraves da contagem sombreamento
+				opcao = sombreamento;				
+				
+				// ****************** CLIENTES ******************
+				if (opcao == 1){
+					
+					// Destroi a Janela Principal
+					destruirJanela(janelaprincipal);
+					
+					// Atribuindo valor original do sombreamento 
+					sombreamento = 1;	
+					
+					// Iniciando Cliclo do menu CRUD
+					do{
+						// Chamando a subrotina imprimir tela CRUD
+						printMenuCLIENTECRUD(janelaprincipal,sombreamento);
+						
+						// Recebendo tecla pressionada
+						tecla = wgetch(janelaprincipal);
+							
+						// Iniciando condicionais da tecla
+						switch(tecla) {
+							
+							// Se pressionar UP (Cima)
+							case KEY_UP:
+								if(sombreamento == 1)
+									sombreamento = 6;
+									else
+										sombreamento--;
+							break;
+					
+							// Se pressionar DOWN(Baixo)	
+							case KEY_DOWN:
+								if(sombreamento == 6)
+									sombreamento = 1;
+									else
+										sombreamento++;
+							break;
+							
+							// Se pressionar ENTER
+							case 10:
+							
+							// Recebendo opcao escolhida atraves da contagem sombreamento
+							opcao = sombreamento;
+								
+								// Se opcao escolhida for 1	"CADASTRAR"							
+								if( opcao == 1){
+									// Destroi Janela CRUD
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaCadastrarCLIENTE(janelaprincipal);
+									
+									// Chamando Subrotina Verificar STRING NOME	
+									scanStringComESPACO(janelaprincipal,7,25,2,31,CLIENTE.nome);
+																		
+									// Chamando Subrotina Verificar INTEIRO CPF
+									scanStringSemESPACO(janelaprincipal,8,24,2,12,CLIENTE.cpf);
+									
+									// Verifica se CPF consta no ARQUIVO
+									resultadoBuscaCPF =  buscarCPF(CLIENTE.cpf);
+									
+									// Valida CPF
+									resultadoValidaCPF = validarCPF(CLIENTE.cpf);
+					
+									// Se Resultado da funcao for diferente de -10 encontrou o CPF 
+									if(resultadoBuscaCPF != -10){
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"      O CPF DIGITADO JA EXISTE     ");
+										printMensagemERRO(janelaprincipal,15,20,"         INSIRA UM NOVO CPF!       ");
+										getchar();
+									}
+									
+									// Se validar CPF for diferente de 1 CPF invalido
+									else if(resultadoValidaCPF != 1){
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"     O CPF DIGITADO E INVALIDO     ");
+										printMensagemERRO(janelaprincipal,15,20,"       INSIRA UM CPF VALIDO!       ");
+										getchar();
+									}
+									
+									// Senao continua o cadastro
+									else{						
+									
+									// Chamando Subrotina Verificar INTEIRO TELEFONE
+									scanLongInteiro(janelaprincipal,9,29,2,11,&CLIENTE.tel);
+									
+									// Setando status como ativo
+									CLIENTE.status = 1;			
+												
+									// Abrindo arquivo DATABASE CLIENTE
+									DBCLIENTE = fopen("DBCLIENTE.TXT","a+");
+																														
+									// Gravando nome do Cliente no disco
+									fwrite(&CLIENTE,sizeof(CLIENTE), 1,DBCLIENTE);
+																	
+									// Mensagem de gravado com Sucesso!
+									printMensagemSUCESSO(janelaprincipal,13,20,"                                   ");
+									printMensagemSUCESSO(janelaprincipal,14,20,"   CADASTRO EFETUADO COM SUCESSO!  ");
+									printMensagemSUCESSO(janelaprincipal,15,20,"                                   ");
+									getchar();
+															
+									// Gravando no disco;
+									fclose(DBCLIENTE);
+									}
+																											
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);	
+								}
+								
+								// Se opcao escolhida for 2 "PESQUISAR"
+								if( opcao == 2){
+									// Destroi Janela CRUD
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaPesquisarCLIENTE(janelaprincipal);
+																		
+									// Chamando Subrotina Verificar INTEIRO CPF
+									scanStringSemESPACO(janelaprincipal,7,33,2,12,CLIENTE.cpf);
+									
+									// Verifica se CPF consta no ARQUIVO
+									resultadoBuscaCPF =  buscarCPF(CLIENTE.cpf);
+									
+									// Valida CPF
+									resultadoValidaCPF = validarCPF(CLIENTE.cpf);
+					
+									// Se busca CPF for diferente de -10 ele encontrou o CPF no arquivo 
+									if(resultadoBuscaCPF != -10){
+									
+									// Imprimindo dados
+									printDadosCLIENTEATIVO(janelaprincipal,resultadoBuscaCPF);
+									
+									// Imprimindo tecla para pressionar para continuar
+									mvwprintw(janelaprincipal,21,18,"Pressione qualquer tecla para continuar!");
+									
+									// Atualizando janela
+									wrefresh(janelaprincipal);
+									
+									// Esperando pressionar qualquer tecla
+									getchar();
+									}
+									
+									// Se validar CPF for diferente de 1, CPF invalido
+									else if(resultadoValidaCPF != 1){
+										
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"     O CPF DIGITADO E INVALIDO     ");
+										printMensagemERRO(janelaprincipal,15,20,"       INSIRA UM CPF VALIDO!       ");
+										
+										// Esperando pressionar qualquer tecla
+										getchar();
+									}
+									
+									// Se busca CPF for igual a -10 cpf nao existe no arquivo
+									else if(resultadoBuscaCPF == -10){
+										
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"O CPF DIGITADO NAO ESTA CADASTRADO!");
+										printMensagemERRO(janelaprincipal,15,20,"         INSIRA UM NOVO CPF!       ");
+										
+										// Esperando pressionar qualquer tecla
+										getchar();
+									}
+																						
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);	
+								}
+				
+								// Se opcao escolhida for 3 "EXCLUIR"
+								if( opcao == 3){
+									// Destroi Janela CRUD
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaExcluirCLIENTE(janelaprincipal);
+																		
+									// Chamando Subrotina Verificar INTEIRO CPF
+									scanStringSemESPACO(janelaprincipal,7,33,2,12,CLIENTE.cpf);
+									
+									// Verifica se CPF consta no ARQUIVO
+									resultadoBuscaCPF =  buscarCPF(CLIENTE.cpf);
+									
+									// Valida CPF
+									resultadoValidaCPF = validarCPF(CLIENTE.cpf);
+					
+									// Se busca CPF for diferente de -10 ele encontrou o CPF no arquivo 
+									if(resultadoBuscaCPF != -10){
+										printDadosCLIENTEATIVO(janelaprincipal, resultadoBuscaCPF);
+										excluirCLIENTE(janelaprincipal, resultadoBuscaCPF);
+										
+									}
+									
+									// Se validar CPF for diferente de 1, CPF invalido
+									else if(resultadoValidaCPF != 1){
+										
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"     O CPF DIGITADO E INVALIDO     ");
+										printMensagemERRO(janelaprincipal,15,20,"       INSIRA UM CPF VALIDO!       ");
+									
+										// Esperando pressionar qualquer tecla
+										getchar();	
+									}
+									
+									// Se busca CPF for igual a -10 cpf nao existe no arquivo
+									else if(resultadoBuscaCPF == -10){
+										
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"O CPF DIGITADO NAO ESTA CADASTRADO!");
+										printMensagemERRO(janelaprincipal,15,20,"         INSIRA UM NOVO CPF!       ");
+
+										// Esperando pressionar qualquer tecla
+										getchar();
+									}
+																						
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);	
+								}
+								
+								// Se opcao escolhida for 4 "EDITAR"
+								if( opcao == 4){
+									// Destroi Janela CRUD
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaEditarCLIENTE(janelaprincipal);
+																		
+									// Chamando Subrotina Verificar INTEIRO CPF
+									scanStringSemESPACO(janelaprincipal,7,33,2,12,CLIENTE.cpf);
+									
+									// Verifica se CPF consta no ARQUIVO
+									resultadoBuscaCPF =  buscarCPF(CLIENTE.cpf);
+									
+									// Valida CPF
+									resultadoValidaCPF = validarCPF(CLIENTE.cpf);
+									
+									// Se busca CPF for diferente de -10 ele encontrou o CPF no arquivo 
+									if(resultadoBuscaCPF != -10){
+										
+										editarCLIENTE(janelaprincipal,resultadoBuscaCPF);	
+										
+									}
+									
+									// Se o resultado da VALIDA CPF for diferente de 1 CPF Ã© invalido 
+									else if(resultadoValidaCPF != 1){
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"     O CPF DIGITADO E INVALIDO     ");
+										printMensagemERRO(janelaprincipal,15,20,"       INSIRA UM CPF VALIDO!       ");
+										getchar();
+									}
+										
+									// Se o resultado da BUSCA CPF for igual a -10 ele nÃ£o encontrou o CPF	
+									else if(resultadoBuscaCPF == -10){
+										printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,14,20,"O CPF DIGITADO NAO ESTA CADASTRADO!");
+										printMensagemERRO(janelaprincipal,15,20,"         INSIRA UM NOVO CPF!       ");
+											getchar();
+									}									
+												
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);	
+								}
+								
+								// Se opcao escolhida for 5 "LIXEIRA"
+								if( opcao == 5){
+									
+								// Destroi Janela CRUD
+								destruirJanela(janelaprincipal);
+								
+								// Atribuindo valor original do sombreamento 
+								sombreamento = 1;	
+																	
+									do{
+										printMenuCLIENTELIXEIRA(janelaprincipal,sombreamento);
+										
+										// Recebendo tecla pressionada
+										tecla = wgetch(janelaprincipal);
+							
+										// Iniciando condicionais da tecla
+										switch(tecla) {
+																				
+										// Se pressionar UP (Cima)
+											case KEY_UP:
+											if(sombreamento == 1)
+												sombreamento = 4;
+											else
+												sombreamento--;
+											break;
+					
+											// Se pressionar DOWN(Baixo)	
+											case KEY_DOWN:
+											if(sombreamento == 4)
+												sombreamento = 1;
+												else
+												sombreamento++;
+											break;
+							
+											// Se pressionar ENTER
+											case 10:
+							
+											// Recebendo opcao escolhida atraves da contagem sombreamento
+											opcao = sombreamento;
+											
+											// Se opcao Escolhida for EXIBIR LIXEIRA
+											if(opcao == 1){
+												// Destroi Janela CRUD
+												destruirJanela(janelaprincipal);
+												
+												// Mostra Relatorio clientes da LIXEIRA
+												printTelaRelatorioClientesEXCLUIDOS(janelaprincipal);
+												
+												// Espera alguma tecla
+												getchar();
+																														
+												// Destroi janela
+												destruirJanela(janelaprincipal);
+												}
+												
+											// Se opcao Escolhida for RESTAURAR CLIENTE LIXEIRA
+											if(opcao == 2){
+												printTelaLixeiraRESTAURARCLIENTE(janelaprincipal);
+												
+												// Chamando Subrotina Verificar INTEIRO CPF
+												scanStringSemESPACO(janelaprincipal,7,45,2,12,CLIENTE.cpf);
+									
+												// Verifica se CPF consta no ARQUIVO
+												resultadoBuscaCPF =  buscarCPF(CLIENTE.cpf);
+									
+												// Valida CPF
+												resultadoValidaCPF = validarCPF(CLIENTE.cpf);
+												
+												// Se o resultado da VALIDA CPF for diferente de 1 CPF Ã© invalido 
+												if(resultadoValidaCPF != 1){
+													printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+													printMensagemERRO(janelaprincipal,14,20,"     O CPF DIGITADO E INVALIDO     ");
+													printMensagemERRO(janelaprincipal,15,20,"       INSIRA UM CPF VALIDO!       ");
+													getchar();
+												}
+										
+												// Se o resultado da BUSCA CPF for igual a -10 ele nÃ£o encontrou o CPF	
+												else if(resultadoBuscaCPF == -10){
+													printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+													printMensagemERRO(janelaprincipal,14,20,"O CPF DIGITADO NAO ESTA CADASTRADO!");
+													printMensagemERRO(janelaprincipal,15,20,"         INSIRA UM NOVO CPF!       ");
+													getchar();
+												}	
+												
+												else if(resultadoBuscaCPF != 10){
+													printDadosCLIENTEINATIVO(janelaprincipal,resultadoBuscaCPF);
+													restaurarCLIENTE(janelaprincipal,resultadoBuscaCPF);
+													
+												}
+																								
+												destruirJanela(janelaprincipal);
+												
+												}
+											
+											// Se opcao Escolhida for ESVAZIAR LIXEIRA
+											if(opcao == 3){
+												printTelaLixeiraESVAZIARCLIENTE(janelaprincipal);
+												
+												// Chamando Subrotina Verificar INTEIRO CPF
+												scanStringSemESPACO(janelaprincipal,7,43,2,12,CLIENTE.cpf);
+									
+												// Verifica se CPF consta no ARQUIVO
+												resultadoBuscaCPF =  buscarCPF(CLIENTE.cpf);
+									
+												// Valida CPF
+												resultadoValidaCPF = validarCPF(CLIENTE.cpf);
+												
+												// Se o resultado da VALIDA CPF for diferente de 1 CPF Ã© invalido 
+												if(resultadoValidaCPF != 1){
+													printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+													printMensagemERRO(janelaprincipal,14,20,"     O CPF DIGITADO E INVALIDO     ");
+													printMensagemERRO(janelaprincipal,15,20,"       INSIRA UM CPF VALIDO!       ");
+													getchar();
+												}
+										
+												// Se o resultado da BUSCA CPF for igual a -10 ele nÃ£o encontrou o CPF	
+												else if(resultadoBuscaCPF == -10){
+													printMensagemERRO(janelaprincipal,13,20,"                ERRO!              ");
+													printMensagemERRO(janelaprincipal,14,20,"O CPF DIGITADO NAO ESTA CADASTRADO!");
+													printMensagemERRO(janelaprincipal,15,20,"         INSIRA UM NOVO CPF!       ");
+													getchar();
+												}	
+												
+												else if(resultadoBuscaCPF != 10){
+													printDadosCLIENTEINATIVO(janelaprincipal,resultadoBuscaCPF);
+													esvaziarCLIENTE(janelaprincipal,resultadoBuscaCPF);
+													
+												}
+																								
+												destruirJanela(janelaprincipal);
+												
+												}							
+											
+											// Se opcao Escolhida for RETORNAR AO MENU CLIENTE
+											if(opcao == 4){
+												sombreamento = 1;	
+												destruirJanela(janelaprincipal);
+												goto retornarMenuCRUDCLIENTE;
+											}
+										}	
+										destruirJanela(janelaprincipal);
+									}while(1);
+								
+								}							
+								
+								// Se opcao escolhida for 5 "RETORNAR AO MENU"
+								if ( opcao == 6){
+									sombreamento = 1;
+									destruirJanela(janelaprincipal);
+									goto retornarMenuPrincipal;
+								}
+								break;
+							}
+					// Goto para retornar ao MenuCRUD CLIENTE
+					retornarMenuCRUDCLIENTE:
+					refresh();
+					endwin();
+					
+					destruirJanela(janelaprincipal);	
+					}while(1);
+				}
+				
+				// ****************** VEICULOS ******************
+				if (opcao == 2){
+					
+				// Destroi a Janela Principal
+					destruirJanela(janelaprincipal);
+					
+					// Atribuindo valor original do sombreamento 
+					sombreamento = 1;	
+					
+					// Iniciando Cliclo do menu CRUD
+					do{
+						// Chamando a subrotina imprimir tela CRUD
+						printMenuVEICULOCRUD(janelaprincipal,sombreamento);
+						
+						// Recebendo tecla pressionada
+						tecla = wgetch(janelaprincipal);
+							
+						// Iniciando condicionais da tecla
+						switch(tecla) {
+							
+							// Se pressionar UP (Cima)
+							case KEY_UP:
+								if(sombreamento == 1)
+									sombreamento = 6;
+									else
+										sombreamento--;
+							break;
+					
+							// Se pressionar DOWN(Baixo)	
+							case KEY_DOWN:
+								if(sombreamento == 6)
+									sombreamento = 1;
+									else
+										sombreamento++;
+							break;
+							
+							// Se pressionar ENTER
+							case 10:
+							
+							// Recebendo opcao escolhida atraves da contagem sombreamento
+							opcao = sombreamento;
+								
+								// Se opcao escolhida for 1	"CADASTRAR VEICULOS"							
+								if( opcao == 1){
+									
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaCadastrarVEICULO(janelaprincipal);
+									
+									// Chamando Subrotina Verificar STRING PLACA	
+									scanStringInteiroSemESPACO(janelaprincipal,7,26,2,8,VEICULO.placa);
+									
+									// FunÃ§Ã£o verificando se PLACA ja existe
+									resultadoBuscaPLACA = buscarPLACA(VEICULO.placa);
+					
+									// Campo nao pode ser vazio
+									if(strcmp(VEICULO.placa,"") == 0){
+										printMensagemERRO(janelaprincipal,16,20,"               ERRO!               ");
+										printMensagemERRO(janelaprincipal,17,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+										printMensagemERRO(janelaprincipal,18,20,"       INSIRA UMA NOVA PLACA!      ");
+										getchar();
+										
+									}
+					
+									// Se Resultado da funcao for diferente de -10 encontrou a PLACA 
+									else if(resultadoBuscaPLACA != -10){
+										printMensagemERRO(janelaprincipal,16,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,17,20,"    A PLACA DIGITADA JA EXISTE!    ");
+										printMensagemERRO(janelaprincipal,18,20,"       INSIRA UMA NOVA PLACA!      ");
+										getchar();
+									}
+								
+									// Senao continua o cadastro						
+									else if(resultadoBuscaPLACA == -10){						
+									strcpy(VEICULO.modelo, "NULL");
+									strcpy(VEICULO.marca, "NULL");
+									VEICULO.ano = 0;
+									VEICULO.km =  0;
+									VEICULO.diaria = 0;
+									VEICULO.limitekm =  0;
+									VEICULO.valorkm =  0;
+									VEICULO.status = 1;
+									
+									// Chamando Subrotina Verificar STRING MODELO	
+									scanStringInteiroComESPACO(janelaprincipal,8,27,2,16,VEICULO.modelo);
+																	
+									// Chamando Subrotina Verificar STRING MARCA	
+									scanStringComESPACO(janelaprincipal,9,26,2,11,VEICULO.marca);
+															
+									// Chamando Subrotina Verificar INTEIRO ANO
+									scanInteiro(janelaprincipal,10,24,2,5,&VEICULO.ano);
+									
+									// Chamando Subrotina Verificar INT KM
+									scanInteiro(janelaprincipal,11,33,2,7,&VEICULO.km);
+									
+									// Chamando Subrotina Verificar INTLIMITE KM
+									scanInteiro(janelaprincipal,12,40,2,7,&VEICULO.limitekm);
+									
+									// Chamando Subrotina Verificar FLOAT DIARIA
+									scanFloat(janelaprincipal,13,36,2,7,&VEICULO.diaria);
+									
+									// Chamando Subrotina Verificar FLOAT VALORKM
+									scanFloat(janelaprincipal,14,32,2,11,&VEICULO.valorkm);
+									
+									// Abrindo arquivo DATABASE CLIENTE
+									DBVEICULO = fopen("DBVEICULO.TXT","a+");
+																														
+									// Gravando dados VEICULO no disco
+									fwrite(&VEICULO,sizeof(VEICULO), 1,DBVEICULO);
+																	
+									// Mensagem de gravado com Sucesso!
+									printMensagemSUCESSO(janelaprincipal,16,20,"                                   ");
+									printMensagemSUCESSO(janelaprincipal,17,20,"   VEICULO CADASTRADO COM SUCESSO! ");
+									printMensagemSUCESSO(janelaprincipal,18,20,"                                   ");
+									getchar();
+															
+									// Gravando no disco;
+									fclose(DBVEICULO);
+									}
+																											
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);									
+								}
+									
+								// Se opcao escolhida for 2 "PESQUISAR VEICULOS"
+								if( opcao == 2){
+									// Destroi Janela CRUD
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaPesquisarVEICULO(janelaprincipal);
+																		
+									// Chamando Subrotina Verificar INTEIRO CPF
+									scanStringInteiroSemESPACO(janelaprincipal,7,35,2,8,VEICULO.placa);
+									
+									// FunÃ§Ã£o verificando se PLACA ja existe
+									resultadoBuscaPLACA = buscarPLACA(VEICULO.placa);
+
+									// Se Resultado for vazio mostra mensagem de erro
+									if(strcmp(VEICULO.placa,"") == 0){
+										printMensagemERRO(janelaprincipal,18,20,"               ERRO!               ");
+										printMensagemERRO(janelaprincipal,19,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+										printMensagemERRO(janelaprincipal,20,20,"       INSIRA UMA NOVA PLACA!      ");
+										getchar();
+										
+										}
+	
+									// Se busca PLACA for igual a -10 placa nao existe no arquivo
+									else if(resultadoBuscaPLACA == -10){
+										
+										printMensagemERRO(janelaprincipal,18,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,19,20,"	 A PLACA NAO ESTA CADASTRADA!  ");
+										printMensagemERRO(janelaprincipal,20,20,"       INSIRA UMA NOVA PLACA!      ");
+										
+										// Esperando pressionar qualquer tecla
+										getchar();
+									}
+									
+									// Se Resultado da funcao for diferente de -10 encontrou a PLACA 
+									else if (resultadoBuscaPLACA != -10){
+										// Imprimindo dados do veiculo
+										printDadosVEICULO(janelaprincipal,resultadoBuscaPLACA);
+										
+										// Imprimindo tecla para pressionar para continuar
+										mvwprintw(janelaprincipal,21,18,"Pressione qualquer tecla para continuar!");
+									
+										// Atualizando janela
+										wrefresh(janelaprincipal);
+										
+										// Esperando pressionar qualquer tecla
+										getchar();
+									}
+																						
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);	
+								}
+												
+								// Se opcao escolhida for 3 "EXCLUIR VEICULOS"
+								if( opcao == 3){
+									// Destroi Janela CRUD
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaExcluirVEICULO(janelaprincipal);
+																		
+									// Chamando Subrotina Verificar INTEIRO CPF
+									scanStringInteiroSemESPACO(janelaprincipal,7,35,2,8,VEICULO.placa);
+									
+									// Verifica se CPF consta no ARQUIVO
+									resultadoBuscaPLACA =  buscarPLACA(VEICULO.placa);
+									
+									// Se validar CPF for diferente de 1, CPF invalido
+									if(strcmp(VEICULO.placa,"") == 0 ){
+										
+										printMensagemERRO(janelaprincipal,17,20,"               ERRO!               ");
+										printMensagemERRO(janelaprincipal,18,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+										printMensagemERRO(janelaprincipal,19,20,"       INSIRA UMA NOVA PLACA!      ");;
+										
+										wrefresh(janelaprincipal);
+										
+										// Esperando pressionar qualquer tecla
+										getchar();	
+									}
+									
+									// Se busca CPF for igual a -10 cpf nao existe no arquivo
+									else if(resultadoBuscaPLACA == -10){
+										
+										printMensagemERRO(janelaprincipal,17,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,18,20,"	 A PLACA NAO ESTA CADASTRADA!  ");
+										printMensagemERRO(janelaprincipal,19,20,"       INSIRA UMA NOVA PLACA!      ");
+										wrefresh(janelaprincipal);
+										
+										// Esperando pressionar qualquer tecla
+										getchar();
+									}
+									
+									// Se busca CPF for diferente de -10 ele encontrou o CPF no arquivo 
+									else if (resultadoBuscaPLACA != -10){
+										printDadosVEICULO(janelaprincipal, resultadoBuscaPLACA);
+										excluirVEICULO(janelaprincipal, resultadoBuscaPLACA);
+										
+									}												
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);	
+								}
+								
+								// Se opcao escolhida for 4 "EDITAR VEICULOS"
+								if( opcao == 4){
+									// Destroi Janela CRUD
+									destruirJanela(janelaprincipal);
+									
+									// Imprimi a tela de Cadastro do CRUD
+									printTelaEditarVEICULO(janelaprincipal);
+																		
+									// Chamando Subrotina Verificar INTEIRO E STRING PLACA
+									scanStringInteiroSemESPACO(janelaprincipal,7,18,2,8,VEICULO.placa);
+									
+									// Verifica se CPF consta no ARQUIVO
+									resultadoBuscaPLACA =  buscarPLACA(VEICULO.placa);
+
+									
+									// Se busca CPF for diferente de -10 ele encontrou a PLACA no arquivo
+									if(resultadoBuscaPLACA != -10){
+
+										editarVEICULO(janelaprincipal,resultadoBuscaPLACA);	
+										
+									}
+									
+									// Se validar CPF for diferente de 1, CPF invalido
+									if(strcmp(VEICULO.placa,"") == 0 ){
+										
+										printMensagemERRO(janelaprincipal,18,20,"               ERRO!               ");
+										printMensagemERRO(janelaprincipal,19,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+										printMensagemERRO(janelaprincipal,20,20,"       INSIRA UMA NOVA PLACA!      ");
+										
+										// Atualiza tela
+										wrefresh(janelaprincipal);
+										
+										// Esperando pressionar qualquer tecla
+										getchar();	
+									}
+									
+									// Se busca CPF for igual a -10 cpf nao existe no arquivo
+									else if(resultadoBuscaPLACA == -10){
+										
+										printMensagemERRO(janelaprincipal,18,20,"                ERRO!              ");
+										printMensagemERRO(janelaprincipal,19,20,"	 A PLACA NAO ESTA CADASTRADA!  ");
+										printMensagemERRO(janelaprincipal,20,20,"       INSIRA UMA NOVA PLACA!      ");
+										
+										// Atualiza tela
+										wrefresh(janelaprincipal);
+										
+										// Esperando pressionar qualquer tecla
+										getchar();
+									}						
+												
+									// Destroi a Janela de Cadastro
+									destruirJanela(janelaprincipal);	
+								}
+								
+								// Se opcao escolhida for 5 "LIXEIRA"
+								if( opcao == 5){
+									
+								// Destroi Janela CRUD
+								destruirJanela(janelaprincipal);
+								
+								// Atribuindo valor original do sombreamento 
+								sombreamento = 1;	
+																	
+									do{
+										printMenuCLIENTELIXEIRA(janelaprincipal,sombreamento);
+										
+										// Recebendo tecla pressionada
+										tecla = wgetch(janelaprincipal);
+							
+										// Iniciando condicionais da tecla
+										switch(tecla) {
+																				
+										// Se pressionar UP (Cima)
+											case KEY_UP:
+											if(sombreamento == 1)
+												sombreamento = 4;
+											else
+												sombreamento--;
+											break;
+					
+											// Se pressionar DOWN(Baixo)	
+											case KEY_DOWN:
+											if(sombreamento == 4)
+												sombreamento = 1;
+												else
+												sombreamento++;
+											break;
+							
+											// Se pressionar ENTER
+											case 10:
+							
+											// Recebendo opcao escolhida atraves da contagem sombreamento
+											opcao = sombreamento;
+											
+											// Se opcao Escolhida for EXIBIR LIXEIRA
+											if(opcao == 1){
+												// Destroi Janela CRUD
+												destruirJanela(janelaprincipal);
+												
+												// Mostra Relatorio clientes da LIXEIRA
+												printTelaRelatorioVeiculosEXCLUIDOS(janelaprincipal);
+												
+												// Espera alguma tecla
+												getchar();
+																														
+												// Destroi janela
+												destruirJanela(janelaprincipal);
+												}
+												
+											// Se opcao Escolhida for RESTAURAR VEICULO LIXEIRA
+											if(opcao == 2){
+												printTelaLixeiraRESTAURARVEICULO(janelaprincipal);
+												
+												// Chamando Subrotina Verificar INTEIRO STRING PLACA
+												scanStringInteiroSemESPACO(janelaprincipal,7,45,2,8,VEICULO.placa);
+									
+												// Verifica se PLACA consta no ARQUIVO
+												resultadoBuscaPLACA =  buscarPLACA(VEICULO.placa);
+												
+												// Se o resultado da PLACA for vazio
+												if(strcmp(VEICULO.placa,"") == 0){
+													printMensagemERRO(janelaprincipal,17,20,"               ERRO!               ");
+													printMensagemERRO(janelaprincipal,18,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+													printMensagemERRO(janelaprincipal,19,20,"       INSIRA UMA NOVA PLACA!      ");
+													getchar();
+												}
+										
+												// Se o resultado da BUSCA PLACA for igual a -10 ele nÃ£o encontrou a PLACA	
+												else if(resultadoBuscaPLACA == -10){
+													printMensagemERRO(janelaprincipal,17,20,"                ERRO!              ");
+													printMensagemERRO(janelaprincipal,18,20,"	 A PLACA NAO ESTA CADASTRADA!  ");
+													printMensagemERRO(janelaprincipal,19,20,"       INSIRA UMA NOVA PLACA!      ");
+													getchar();
+												}	
+												
+												else if(resultadoBuscaPLACA != 10){
+													printDadosVEICULOINATIVO(janelaprincipal,resultadoBuscaPLACA);
+													restaurarVEICULO(janelaprincipal,resultadoBuscaPLACA);
+													
+												}
+																								
+												destruirJanela(janelaprincipal);
+												
+												}
+											
+											// Se opcao Escolhida for ESVAZIAR LIXEIRA
+											if(opcao == 3){
+												printTelaLixeiraESVAZIARVEICULO(janelaprincipal);
+												
+												// Chamando Subrotina Verificar INTEIRO CPF
+												scanStringInteiroSemESPACO(janelaprincipal,7,45,2,8,VEICULO.placa);
+									
+												// Verifica se CPF consta no ARQUIVO
+												resultadoBuscaPLACA =  buscarPLACA(VEICULO.placa);
+												
+											// Se o resultado da PLACA for vazio
+												if(strcmp(VEICULO.placa,"") == 0){
+													printMensagemERRO(janelaprincipal,17,20,"               ERRO!               ");
+													printMensagemERRO(janelaprincipal,18,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+													printMensagemERRO(janelaprincipal,19,20,"       INSIRA UMA NOVA PLACA!      ");
+													getchar();
+												}
+										
+												// Se o resultado da BUSCA PLACA for -10 nao encontrou a PLACA	
+												else if(resultadoBuscaPLACA == -10){
+													printMensagemERRO(janelaprincipal,17,20,"                ERRO!              ");
+													printMensagemERRO(janelaprincipal,18,20,"	 A PLACA NAO ESTA CADASTRADA!  ");
+													printMensagemERRO(janelaprincipal,19,20,"       INSIRA UMA NOVA PLACA!      ");
+													getchar();
+												}		
+												
+												else if(resultadoBuscaCPF != 10){
+													printDadosVEICULOINATIVO(janelaprincipal,resultadoBuscaPLACA);
+													esvaziarVEICULO(janelaprincipal,resultadoBuscaPLACA);
+													
+												}
+																								
+												destruirJanela(janelaprincipal);
+												
+												}							
+											
+											// Se opcao Escolhida for RETORNAR AO MENU CLIENTE
+											if(opcao == 4){
+												sombreamento = 1;	
+												destruirJanela(janelaprincipal);
+												goto retornarMenuCRUDVeiculo;
+											}
+										}	
+										destruirJanela(janelaprincipal);
+									}while(1);
+								
+								}							
+								
+								// Se opcao escolhida for 5 "RETORNAR AO MENU"
+								if ( opcao == 6){
+									sombreamento = 1;
+									destruirJanela(janelaprincipal);
+									goto retornarMenuPrincipal;
+								}
+							break;
+							}
+	
+					retornarMenuCRUDVeiculo:
+					refresh();
+					endwin();
+					
+					}while(1);
+				}
+				
+				// ****************** LOCACAO  ******************
+				if (opcao == 3){
+					destruirJanela(janelaprincipal);
+									
+					//Imprime tela de LOCACAO
+					printTelaLOCACAO(janelaprincipal);
+									
+					// Chamando Subrotina Verificar INTEIRO CPF
+					scanStringSemESPACO(janelaprincipal,7,34,2,12,LOCACAO.cpf);
+									
+					// Verifica se CPF consta no ARQUIVO
+					resultadoBuscaCPF =  buscarCPF(LOCACAO.cpf);
+									
+					// Valida CPF
+					resultadoValidaCPF = validarCPF(LOCACAO.cpf);
+					
+					// Buscar Status do CLIENTE
+					resultadoBuscaStatusCLIENTE = buscarStatusCLIENTE(resultadoBuscaCPF);
+					
+					// Se validar CPF for diferente de 1 CPF invalido
+					if(resultadoValidaCPF != 1){
+						printMensagemERRO(janelaprincipal,16,20,"                ERRO!              ");
+						printMensagemERRO(janelaprincipal,17,20,"     O CPF DIGITADO E INVALIDO     ");
+						printMensagemERRO(janelaprincipal,18,20,"       INSIRA UM CPF VALIDO!       ");						
+						getchar();
+					}
+									
+					// Se Busca CPF == -10 o CPF nao esta CADASTRADO
+					else if(resultadoBuscaCPF == -10){
+						printMensagemERRO(janelaprincipal,16,20,"                ERRO!              ");
+						printMensagemERRO(janelaprincipal,17,20,"O CPF DIGITADO NAO ESTA CADASTRADO!");
+						printMensagemERRO(janelaprincipal,18,20,"         INSIRA UM NOVO CPF!       ");					
+						getchar();
+						
+					}		
+					
+					// Se status == 0 o CPF esta EXCLUIDO
+					else if(resultadoBuscaStatusCLIENTE == 0){
+						printMensagemERRO(janelaprincipal,16,20,"                ERRO!              ");
+						printMensagemERRO(janelaprincipal,17,20,"   O CPF DIGITADO ESTA EXCLUIDO!   ");
+						printMensagemERRO(janelaprincipal,18,20,"       ACESSE O MENU LIXEIRA       ");
+						getchar();
+					}
+					
+					// Senao continua o cadastro da locacao
+					else{
+						
+						// Chamando Subrotina Verificar STRING PLACA	
+						scanStringInteiroSemESPACO(janelaprincipal,8,36,2,8,LOCACAO.placa);
+									
+						// Chamando funcoes de BUSCA para verificacoes
+						resultadoBuscaPLACA = buscarPLACA(LOCACAO.placa);
+						resultadoBuscaLOCACAO = buscarLOCACAO(LOCACAO.placa);
+						resultadoBuscaStatusVEICULO = buscarStatusVEICULO(resultadoBuscaPLACA);
+						
+						// Se campo placa for vazio
+						if(strcmp(LOCACAO.placa,"") == 0){
+							printMensagemERRO(janelaprincipal,16,20,"               ERRO!               ");
+							printMensagemERRO(janelaprincipal,17,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+							printMensagemERRO(janelaprincipal,18,20,"       INSIRA UMA NOVA PLACA!      ");
+							getchar();	
+						}
+	
+						// Se busca PLACA == -10 a placa NAO EXISTE no arquivo
+						else if(resultadoBuscaPLACA == -10){				
+							printMensagemERRO(janelaprincipal,16,20,"                ERRO!              ");
+							printMensagemERRO(janelaprincipal,17,20,"	 A PLACA NAO ESTA CADASTRADA!  ");
+							printMensagemERRO(janelaprincipal,18,20,"       INSIRA UMA NOVA PLACA!      ");
+							getchar();
+						}
+						
+						// Se Busca status VEICULO == 0 o veiculo esta EXCLUIDO
+						else if(resultadoBuscaStatusVEICULO == 0){
+							printMensagemERRO(janelaprincipal,16,20,"               ERRO!              ");
+							printMensagemERRO(janelaprincipal,17,20,"     O VEICULO ESTA EXCLUIDO!     ");
+							printMensagemERRO(janelaprincipal,18,20,"  ACESSE O MENU LIXEIRA VEICULO   ");	
+							getchar();
+							
+						}		
+						
+						// Se Busca LOCACAO != -10 o veiculo esta LOCADO
+						else if(resultadoBuscaLOCACAO != -10){
+							printMensagemERRO(janelaprincipal,16,20,"               ERRO!              ");
+							printMensagemERRO(janelaprincipal,17,20,"    O VEICULO JA ESTA LOCADO!     ");
+							printMensagemERRO(janelaprincipal,18,20,"  INSIRA UM VEICULO NAO LOCADO!   ");	
+							getchar();
+							
+						} 
+						
+						// Se o resultado da Busca PLACA for != -10 continua o cadastro
+						else if(resultadoBuscaLOCACAO == -10){
+					
+							// Pegando data do sistema 
+							datasistema(LOCACAO.datasaida);
+							mvwprintw(janelaprincipal,10,34,"%s",LOCACAO.datasaida);
+							
+							// Lendo data de entrega prevista
+							scanStringInteiroComESPACO(janelaprincipal,11,36,2,12,LOCACAO.dataentrega);
+							
+							// Lendo Dias Locados
+							scanInteiro(janelaprincipal,12,33,2,5,&LOCACAO.diaslocados);
+							
+							// Lendo valor Diaria 
+							resultadoValorDiariaVEICULO = buscarValorDiariaVEICULO(resultadoBuscaPLACA);
+							LOCACAO.valordiaria = resultadoValorDiariaVEICULO;
+							mvwprintw(janelaprincipal,13,36,"%.2f",LOCACAO.valordiaria);
+							
+							// Lendo valor kilometragem inicial
+							resultadoValorKmInicialVEICULO = buscarKmInicialVEICULO(resultadoBuscaPLACA);
+							LOCACAO.kminicial = resultadoValorKmInicialVEICULO;
+							mvwprintw(janelaprincipal,14,31,"%d",LOCACAO.kminicial);
+							
+							// Calculando valor total
+							resultadoValorTotalLOCACAO = calculaValorTotalLOCACAO(LOCACAO.valordiaria, LOCACAO.diaslocados);
+							LOCACAO.valortotal = resultadoValorTotalLOCACAO;
+							printMensagemSUCESSONUMERO(janelaprincipal,17,39,LOCACAO.valortotal);
+							
+							// Gravar no arquivo DBLOCACAO.TXT
+							DBLOCACAO = fopen("DBLOCACAO.TXT","a+");
+																														
+							// Gravando dados VEICULO no disco
+							fwrite(&LOCACAO,sizeof(LOCACAO), 1,DBLOCACAO);
+							
+							fclose(DBLOCACAO);
+							// Imprimindo tecla para pressionar para continuar
+							mvwprintw(janelaprincipal,20,18,"       LOCACAO EFETUADA COM SUCESSO!    ");
+							// Imprimindo tecla para pressionar para continuar
+							mvwprintw(janelaprincipal,21,18,"Pressione qualquer tecla para continuar!");
+									
+							// Atualizando janela
+							wrefresh(janelaprincipal);
+										
+							// Esperando pressionar qualquer tecla
+							getchar();
+						}
+						
+						// Destruindo janela				
+						destruirJanela(janelaprincipal);					
+					}
+					destruirJanela(janelaprincipal);
+				}
+				
+				// ***************** DEVOLUCAO ******************
+				if(opcao == 4){
+					
+					// Destroi a Janela
+					destruirJanela(janelaprincipal);
+									
+					//Imprime tela de LOCACAO
+					printTelaDEVOLUCAO(janelaprincipal);
+					
+					// Chamando Subrotina Verificar STRING PLACA	
+						scanStringInteiroSemESPACO(janelaprincipal,7,18,2,8,DEVOLUCAO.placa);
+									
+						// Chamando funcoes de BUSCA para verificacoes
+						resultadoBuscaPLACA = buscarPLACA(DEVOLUCAO.placa);
+						resultadoBuscaLOCACAO = buscarLOCACAO(DEVOLUCAO.placa);
+						resultadoBuscaStatusVEICULO = buscarStatusVEICULO(resultadoBuscaPLACA);
+						
+						// Se campo placa for vazio
+						if(strcmp(DEVOLUCAO.placa,"") == 0){
+							printMensagemERRO(janelaprincipal,16,20,"               ERRO!               ");
+							printMensagemERRO(janelaprincipal,17,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+							printMensagemERRO(janelaprincipal,18,20,"       INSIRA UMA NOVA PLACA!      ");
+							getchar();	
+						}
+	
+						// Se busca PLACA == -10 a placa NAO EXISTE no arquivo
+						else if(resultadoBuscaPLACA == -10){				
+							printMensagemERRO(janelaprincipal,16,20,"                ERRO!              ");
+							printMensagemERRO(janelaprincipal,17,20,"	 A PLACA NAO ESTA CADASTRADA!  ");
+							printMensagemERRO(janelaprincipal,18,20,"       INSIRA UMA NOVA PLACA!      ");
+							getchar();
+						}
+						
+						// Se Busca status VEICULO == 0 o veiculo esta EXCLUIDO
+						else if(resultadoBuscaStatusVEICULO == 0){
+							printMensagemERRO(janelaprincipal,16,20,"               ERRO!              ");
+							printMensagemERRO(janelaprincipal,17,20,"     O VEICULO ESTA EXCLUIDO!     ");
+							printMensagemERRO(janelaprincipal,18,20,"  ACESSE O MENU LIXEIRA VEICULO   ");	
+							getchar();
+							
+						}		
+						
+						// Se Busca LOCACAO != -10 o veiculo nao esta LOCADO
+						else if(resultadoBuscaLOCACAO == -10){
+						
+							printMensagemERRO(janelaprincipal,16,20,"               ERRO!              ");
+							printMensagemERRO(janelaprincipal,17,20,"    O VEICULO NAO ESTA LOCADO!    ");
+							printMensagemERRO(janelaprincipal,18,20,"     INSIRA UM VEICULO LOCADO!    ");	
+							getchar();
+							
+						} 
+						
+						// Se o resultado da Busca PLACA for != -10 continua o cadastro
+						else if(resultadoBuscaLOCACAO != -10){
+							
+							// Zerando variaveis
+							DEVOLUCAO.diaslocadosextras = 0;
+							DEVOLUCAO.kmfinal = 0;
+							DEVOLUCAO.kminicial = 0;
+							DEVOLUCAO.kmlimite = 0;
+							DEVOLUCAO.valormultakm = 0;
+							DEVOLUCAO.totalanterior = 0;
+							DEVOLUCAO.totalfinal = 0;
+							
+							// Printando dados da LOCACAO
+							printDadosDEVOLUCAO(janelaprincipal,resultadoBuscaLOCACAO);
+							
+							// Lendo Dias Locados Extras
+							scanInteiro(janelaprincipal,9,51,2,6,&DEVOLUCAO.diaslocadosextras);
+							
+							// Lendo Valor da multa por dia EXCEDIDO
+							scanFloat(janelaprincipal,10,57,2,7,&DEVOLUCAO.valormultadia);
+							
+							// Buscando Valor do KM inicial do VEICULO
+							resultadoValorKmInicialVEICULO = buscarKmInicialVEICULO(resultadoBuscaPLACA);
+							DEVOLUCAO.kminicial = resultadoValorKmInicialVEICULO;
+						
+							// Lendo Dia de Devolucao
+							scanInteiro(janelaprincipal,12,48,2,11,&DEVOLUCAO.kmfinal);
+							
+							// Atualizando Kilometragem VEICULO ARQUIVO
+							updateKmVEICULO(resultadoBuscaPLACA,DEVOLUCAO.kmfinal);
+							
+							// Buscando Limite de KM por veiculo
+							resultadoLimiteKmVEICULO = buscarLimiteKmVEICULO(resultadoBuscaPLACA);
+							DEVOLUCAO.kmlimite = resultadoLimiteKmVEICULO;
+							
+							// Buscando valor MULTA por KM do veiculo
+							resultadoValorMultaKmVEICULO = buscarMultaKmVEICULO(resultadoBuscaPLACA);
+							DEVOLUCAO.valormultakm = resultadoValorMultaKmVEICULO;
+							mvwprintw(janelaprincipal,13,56,"%.2f",DEVOLUCAO.valormultakm);
+							
+							// Buscando Saldo anterior TOTAL S/ correÃ§Ã£o
+							resultadoBuscarValorTotalLOCACAO = buscarValorTotalLOCACAO(resultadoBuscaLOCACAO);
+							DEVOLUCAO.totalanterior = resultadoBuscarValorTotalLOCACAO;
+							
+							// Calculando valor TOTAL
+							resultadoBuscarValorTotalLOCACAO = calcularValorTotalDEVOLUCAO(DEVOLUCAO.totalanterior,DEVOLUCAO.diaslocadosextras,DEVOLUCAO.valormultadia,DEVOLUCAO.kminicial,DEVOLUCAO.kmfinal,DEVOLUCAO.kmlimite,DEVOLUCAO.valormultakm);
+							DEVOLUCAO.totalfinal = resultadoBuscarValorTotalLOCACAO;
+							mvwprintw(janelaprincipal,14,47,"%.2f",DEVOLUCAO.totalfinal);
+							
+							// Definindo arquivo fisico como leitura
+							DBDEVOLUCAO = fopen("DBDEVOLUCAO.TXT","a+");
+	
+							// Condicional se o arquivo nao existir ele cria
+							if(DBDEVOLUCAO == NULL){
+								DBDEVOLUCAO = fopen("DBDEVOLUCAO.TXT","w");
+							}
+							
+							// Gravando no arquivo
+							fwrite(&DEVOLUCAO, sizeof(DEVOLUCAO), 1, DBDEVOLUCAO);
+														
+							fclose(DBDEVOLUCAO);
+							
+							// Removendo LOCACAO
+							removerLOCACAO(janelaprincipal,resultadoBuscaLOCACAO);
+														
+							// Imprimindo tecla para pressionar para continuar
+							mvwprintw(janelaprincipal,21,18,"Pressione qualquer tecla para continuar!");
+									
+							// Atualizando janela
+							wrefresh(janelaprincipal);
+										
+							// Esperando pressionar qualquer tecla
+							getchar();
+							}
+					// Destroi a Janela
+					destruirJanela(janelaprincipal);
+						
+				}
+				
+				// ***************** RELATORIOS ******************
+				if(opcao == 5){
+				
+				// Destroi a Janela Principal
+					destruirJanela(janelaprincipal);
+					
+					// Atribuindo valor original do sombreamento 
+					sombreamento = 1;	
+					
+					// Iniciando Cliclo do menu CRUD
+					do{
+						// Chamando a subrotina imprimir tela CRUD
+						printMenuRELATORIOS(janelaprincipal,sombreamento);
+						
+						// Recebendo tecla pressionada
+						tecla = wgetch(janelaprincipal);
+							
+						// Iniciando condicionais da tecla
+						switch(tecla) {
+							
+							// Se pressionar UP (Cima)
+							case KEY_UP:
+								if(sombreamento == 1)
+									sombreamento = 8;
+									else
+										sombreamento--;
+							break;
+					
+							// Se pressionar DOWN(Baixo)	
+							case KEY_DOWN:
+								if(sombreamento == 8)
+									sombreamento = 1;
+									else
+										sombreamento++;
+							break;
+							
+							// Se pressionar ENTER
+							case 10:
+							
+							// Recebendo opcao escolhida atraves da contagem sombreamento
+							opcao = sombreamento;
+								
+								// Se opcao escolhida for 1 CLIENTES EXCLUIDOS						
+								if( opcao == 1){
+									destruirJanela(janelaprincipal);
+									printTelaRelatorioClientesEXCLUIDOS(janelaprincipal);
+									getchar();
+									destruirJanela(janelaprincipal);								
+								}
+									
+								// Se opcao escolhida for 2 CLIENTES ATIVOS
+								if( opcao == 2){
+									destruirJanela(janelaprincipal);
+									printTelaRelatorioClientesATIVOS(janelaprincipal);
+									getchar();
+									destruirJanela(janelaprincipal);
+								}
+												
+								// Se opcao escolhida for 3 TODOS CLIENTES
+								if( opcao == 3){
+									destruirJanela(janelaprincipal);
+									printTelaRelatorioClientes(janelaprincipal);
+									getchar();
+									destruirJanela(janelaprincipal);
+								}
+								
+								
+								// Se opcao escolhida for 4 VEICULOS EXCLUIDOS
+								if( opcao == 4){
+									destruirJanela(janelaprincipal);
+									printTelaRelatorioVeiculosEXCLUIDOS(janelaprincipal);
+									getchar();
+									destruirJanela(janelaprincipal);
+								
+								}	
+								
+								// Se opcao escolhida for 5 VEICULOS ATIVOS
+								if( opcao == 5){
+									destruirJanela(janelaprincipal);
+									printTelaRelatorioVeiculosATIVOS(janelaprincipal);
+									getchar();
+									destruirJanela(janelaprincipal);
+								
+								}							
+								
+								// Se opcao escolhida for 6 TODOS VEICULOS
+								if( opcao == 6){
+									destruirJanela(janelaprincipal);
+									printTelaRelatorioVeiculos(janelaprincipal);
+									getchar();
+									destruirJanela(janelaprincipal);
+								
+								}
+								
+								// Se opcao escolhida for 7 VEICULOS EXCLUIDOS
+								if( opcao == 7){
+									destruirJanela(janelaprincipal);
+									printTelaRelatorioLocados(janelaprincipal);
+									getchar();
+									destruirJanela(janelaprincipal);
+								
+								}
+								
+								// Se opcao escolhida for 8 "RETORNAR AO MENU PRINCIPAL"
+								if ( opcao == 8){
+									sombreamento = 1;
+									destruirJanela(janelaprincipal);
+									goto retornarMenuPrincipal;
+								}
+							break;
+							}
+					
+					}while(1);
+
+				}
+				
+				// ******************   SAIR   ******************
+				if (opcao == 6){
+					goto sairPrograma;
+					}
+			break;
+		}
+		
+		// Goto para retornar ao MenuPrincipal
+		retornarMenuPrincipal:
+		refresh();
+		endwin();	
+		
+	}while(1);
+    
+    // Goto para SAIR do programa
+		sairPrograma:
+		refresh();
+		endwin();	
+	}
+	
+	else{
+	mvwprintw(janelalogin, 2, 3, "                          ");
+	mvwprintw(janelalogin, 3, 3, "       ACESSO NEGADO!     ");
+	mvwprintw(janelalogin, 4, 3, "                          ");
+	wrefresh(janelalogin);
+	getchar();
+		refresh();
+		endwin();
+	}
+		
+return 0;
+}
+
+// Desenvolvimento dos modulos
+void destruirJanela(WINDOW *janela){
+	wclear(janela);
+	wrefresh(janela);
+	endwin();
+}
+
+int buscarUSUARIO(char *nome){
+	
+	// Definindo variaveis
+	int cont = 0;
+	STR_USER REG;
+	
+	// Definindo arquivo logico
+	FILE *DBUSUARIO;
+	
+	// Definindo arquivo fisico como leitura
+	DBUSUARIO = fopen("DBUSUARIO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBUSUARIO == NULL){
+		DBUSUARIO = fopen("DBUSUARIO.TXT","w");
+	}
+	
+	else{
+	
+	// Lendo arquivos do DBCLIENTE
+	fread(&REG,sizeof(REG),1,DBUSUARIO);
+	
+	// Iniciando condicionais
+	while(!feof(DBUSUARIO) && (strcmp(REG.nome,nome) != 0)){
+		cont++;
+		fread(&REG,sizeof(REG),1,DBUSUARIO);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBUSUARIO);
+	
+	// Se encontrar CPF retorna a posicao
+	if(strcmp(REG.nome,nome) == 0){
+		return(cont);	
+	}
+	
+	// Senao ele retorna -10 que significa que nao encontrou o CPF
+	else{
+		return(-10);
+	}
+	
+	
+}
+
+void printTelaLOGIN(WINDOW *janela){
+	// Iniciando Ncurses
+    initscr();
+		
+	init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	init_pair(3,COLOR_WHITE,COLOR_RED);
+	init_pair(4,COLOR_WHITE,COLOR_GREEN);
+	
+	// Criando borda
+	box(janela, ACS_VLINE, ACS_HLINE);
+	wattron (janela, COLOR_PAIR(1));
+	mvwprintw(janela, 2, 3, "                         ");
+	mvwprintw(janela, 3, 3, "  FACA LOGIN NO SISTEMA  ");
+	mvwprintw(janela, 4, 3, "                         ");
+	wattron (janela, COLOR_PAIR(2));
+	mvwprintw(janela, 6, 3, "LOGIN:");
+	mvwprintw(janela, 7, 3, "SENHA:");
+	
+	wrefresh(janela);
+	
+}
+
+void printMenuPrincipal(WINDOW *janela, int sombreamento){
+	
+	// Declarando variÃ¡veis 
+	int pos_linha = 7, pos_coluna = 35, contador;
+    char *vOpcoes[6] = {
+	"1. CLIENTE   ",
+	"2. VEICULO   ",
+	"3. LOCACAO   ",
+	"4. DEVOLUCAO ",
+	"5. RELATORIOS",
+	"6. SAIR      ",
+	};
+	
+    // NÃ£o ecoar na tela
+    noecho();  
+    
+	// Criando borda
+	box(janela, ACS_VLINE, ACS_HLINE);
+    
+    //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+    // Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+    
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(1));
+    mvwprintw(janela,3,25,"                                 ");
+    mvwprintw(janela,4,25,"          MENU PRINCIPAL         ");
+    mvwprintw(janela,5,25,"                                 ");
+	
+	// Setando Par 2 para as opÃ§Ãµes do Menu
+	wattron (janela, COLOR_PAIR(2));
+    
+    // Iniciando cliclo for para imprimir vetor opcoes
+    for(contador = 0; contador < 6; contador++){
+          if(sombreamento == contador + 1)
+            {
+               wattron(janela,A_REVERSE);
+               mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+               wattroff(janela,A_REVERSE);
+             }
+				else
+					mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+					pos_linha++;
+        }
+        wrefresh(janela);
+}
+
+void printMenuCLIENTECRUD(WINDOW *janela, int sombreamento){
+	// Declarando variÃ¡veis 
+	int pos_linha = 7, pos_coluna = 35, contador;
+    char *vOpcoes[6] = {
+	"1. CADASTRAR      ",
+	"2. PESQUISAR      ",
+	"3. EXCLUIR        ",
+	"4. EDITAR         ",
+	"5. LIXEIRA        ",
+	"6. VOLTAR AO MENU ",
+	};
+	
+    // NÃ£o ecoar na tela
+    noecho();  
+    
+     //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+	// Criando borda
+	box(janela, ACS_VLINE, ACS_HLINE);
+    
+    //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+    // Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+    
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(1));
+    mvwprintw(janela,3,25,"                                 ");
+    mvwprintw(janela,4,25,"          MENU CLIENTE           ");
+    mvwprintw(janela,5,25,"                                 ");
+	
+	// Setando Par 2 para as opÃ§Ãµes do Menu
+	wattron (janela, COLOR_PAIR(2));
+    
+    // Iniciando cliclo for para imprimir vetor opcoes
+    for(contador = 0; contador < 6; contador++){
+          if(sombreamento == contador + 1)
+            {
+               wattron(janela,A_REVERSE);
+               mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+               wattroff(janela,A_REVERSE);
+             }
+				else
+					mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+					pos_linha++;
+        }
+        wrefresh(janela);
+}
+
+void printMenuCLIENTELIXEIRA(WINDOW *janela, int sombreamento){
+	// Declarando variÃ¡veis 
+	int pos_linha = 7, pos_coluna = 30, contador;
+    char *vOpcoes[4] = {
+	"1. EXIBIR LIXEIRA        ",	
+	"2. RESTAURAR CLIENTE     ",
+	"3. ESVAZIAR LIXEIRA      ",
+	"4. VOLTAR AO MENU CLIENTE",
+	};
+	
+    // NÃ£o ecoar na tela
+    noecho();  
+    
+     //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+	// Criando borda
+	box(janela, ACS_VLINE, ACS_HLINE);
+    
+    //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+    // Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+    
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(1));
+    mvwprintw(janela,3,25,"                                 ");
+    mvwprintw(janela,4,25,"          MENU LIXEIRA           ");
+    mvwprintw(janela,5,25,"                                 ");
+	
+	// Setando Par 2 para as opÃ§Ãµes do Menu
+	wattron (janela, COLOR_PAIR(2));
+    
+    // Iniciando cliclo for para imprimir vetor opcoes
+    for(contador = 0; contador < 4; contador++){
+          if(sombreamento == contador + 1)
+            {
+               wattron(janela,A_REVERSE);
+               mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+               wattroff(janela,A_REVERSE);
+             }
+				else
+					mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+					pos_linha++;
+        }
+        wrefresh(janela);
+}
+
+void printMenuVEICULOCRUD(WINDOW *janela, int sombreamento){
+	// Declarando variÃ¡veis 
+	int pos_linha = 7, pos_coluna = 35, contador;
+    char *vOpcoes[6] = {
+	"1. CADASTRAR      ",
+	"2. PESQUISAR      ",
+	"3. EXCLUIR        ",
+	"4. EDITAR         ",
+	"5. LIXEIRA        ",
+	"6. VOLTAR AO MENU ",
+	};
+	
+    // NÃ£o ecoar na tela
+    noecho();  
+    
+     //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+	// Criando borda
+	box(janela, ACS_VLINE, ACS_HLINE);
+    
+    //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+    // Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+    
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(1));
+    mvwprintw(janela,3,25,"                                 ");
+    mvwprintw(janela,4,25,"          MENU VEICULO           ");
+    mvwprintw(janela,5,25,"                                 ");
+	
+	// Setando Par 2 para as opÃ§Ãµes do Menu
+	wattron (janela, COLOR_PAIR(2));
+    
+    // Iniciando cliclo for para imprimir vetor opcoes
+    for(contador = 0; contador < 6; contador++){
+          if(sombreamento == contador + 1)
+            {
+               wattron(janela,A_REVERSE);
+               mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+               wattroff(janela,A_REVERSE);
+             }
+				else
+					mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+					pos_linha++;
+        }
+        wrefresh(janela);
+}
+
+void printMenuRELATORIOS(WINDOW *janela, int sombreamento){
+	// Declarando variÃ¡veis 
+	int pos_linha = 7, pos_coluna = 30, contador;
+    char *vOpcoes[10] = {
+	"1. CLIENTES EXCLUIDOS  ",
+	"2. CLIENTES ATIVOS     ",
+	"3. CLIENTES CADASTRADOS",
+	"4. VEICULOS EXCLUIDOS  ",
+	"5. VEICULOS ATIVOS     ",
+	"6. VEICULOS CADASTRADOS",
+	"7. VEICULOS LOCADOS    ",
+	"8. VOLTAR AO MENU      ",
+	};
+	
+    // NÃ£o ecoar na tela
+    noecho();  
+    
+     //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+	// Criando borda
+	box(janela, ACS_VLINE, ACS_HLINE);
+    
+    //Ocultando cursor do MENU :D
+    curs_set(0);
+    
+    // Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+    
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(1));
+    mvwprintw(janela,3,25,"                                 ");
+    mvwprintw(janela,4,25,"        MENU RELATORIOS          ");
+    mvwprintw(janela,5,25,"                                 ");
+	
+	// Setando Par 2 para as opÃ§Ãµes do Menu
+	wattron (janela, COLOR_PAIR(2));
+    
+    // Iniciando cliclo for para imprimir vetor opcoes
+    for(contador = 0; contador < 8; contador++){
+          if(sombreamento == contador + 1)
+            {
+               wattron(janela,A_REVERSE);
+               mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+               wattroff(janela,A_REVERSE);
+             }
+				else
+					mvwprintw(janela,pos_linha,pos_coluna,"%s",vOpcoes[contador]);
+					pos_linha++;
+        }
+        wrefresh(janela);
+}
+
+void printTelaCadastrarCLIENTE(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           CADASTRAR CLIENTE       ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+    mvwprintw(janela,7,20,"Nome:______________________________");
+    mvwprintw(janela,8,20,"CPF:_______________________________");
+    mvwprintw(janela,9,20,"Telefone:__________________________");
+	
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaPesquisarCLIENTE(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           PESQUISAR CLIENTE       ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "INSIRA O CPF:___________");
+    mvwprintw(janela,9,20, "Nome:");
+    mvwprintw(janela,10,20,"CPF:");
+    mvwprintw(janela,11,20,"Telefone:");
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaExcluirCLIENTE(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           EXCLUIR CLIENTE         ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "INSIRA O CPF:___________");
+    mvwprintw(janela,9,20, "Nome:");
+    mvwprintw(janela,10,20,"CPF:");
+    mvwprintw(janela,11,20,"Telefone:");
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaEditarCLIENTE(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           EDITAR CLIENTE	       ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "INSIRA O CPF:___________");
+    mvwprintw(janela,9,20, "Nome:");
+    mvwprintw(janela,10,20,"CPF:");
+    mvwprintw(janela,11,20,"Telefone:");
+    wattron (janela, COLOR_PAIR(1));
+    mvwprintw(janela,13,20,"                                   ");
+    mvwprintw(janela,14,20,"       INSIRA OS NOVOS DADOS       ");
+    mvwprintw(janela,15,20,"                                   ");
+	wattron (janela, COLOR_PAIR(2));
+    mvwprintw(janela,16,20,"Nome:______________________________");
+    mvwprintw(janela,17,20,"CPF:_______________________________");
+    mvwprintw(janela,18,20,"Telefone:__________________________");
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaLixeiraRESTAURARCLIENTE(WINDOW *janela){
+    
+    // Destruindo janela 
+    destruirJanela(janela);
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,1,2,"                                                                        ");
+    mvwprintw(janela,2,2,"                              CLIENTES LIXEIRA                          ");
+	mvwprintw(janela,3,2,"                                                                        ");
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "DIGITE O CPF A RESTAURAR:___________");
+	
+    mvwprintw(janela,9,20, "Nome:");
+    mvwprintw(janela,10,20,"CPF:");
+    mvwprintw(janela,11,20,"Telefone:");
+
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaLixeiraRESTAURARVEICULO(WINDOW *janela){
+    
+    // Destruindo janela 
+    destruirJanela(janela);
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,1,2,"                                                                        ");
+    mvwprintw(janela,2,2,"                              VEICULOS LIXEIRA                          ");
+	mvwprintw(janela,3,2,"                                                                        ");
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "DIGITE A PLACA RESTAURAR:_______");
+	
+    mvwprintw(janela,9,20, "PLACA:");
+    mvwprintw(janela,10,20,"Modelo:");
+    mvwprintw(janela,11,20, "Marca:");
+	mvwprintw(janela,12,20,"Ano:");
+	mvwprintw(janela,13,20,"Kilometragem:");
+	mvwprintw(janela,14,20,"Limite Kilometragem:");
+	mvwprintw(janela,15,20,"Valor Diaria R$:");
+	mvwprintw(janela,16,20,"Valor Km R$:"); 
+
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaLixeiraESVAZIARCLIENTE(WINDOW *janela){
+    
+    // Destruindo janela 
+    destruirJanela(janela);
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	init_pair(3,COLOR_WHITE,COLOR_RED); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,1,2,"                                                                        ");
+    mvwprintw(janela,2,2,"                              CLIENTES LIXEIRA                          ");
+    mvwprintw(janela,4,2,"                                                                        ");
+    // Alterando par de cor
+	wattron (janela, COLOR_PAIR(3));
+	mvwprintw(janela,4,2,"                    CUIDADO! A EXCLUSAO SERA DEFINITIVA!                ");
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "DIGITE O CPF A EXCLUIR:___________");
+    mvwprintw(janela,9,20, "Nome:");
+    mvwprintw(janela,10,20,"CPF:");
+    mvwprintw(janela,11,20,"Telefone:");
+
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaLixeiraESVAZIARVEICULO(WINDOW *janela){
+    
+    // Destruindo janela 
+    destruirJanela(janela);
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	init_pair(3,COLOR_WHITE,COLOR_RED); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,1,2,"                                                                        ");
+    mvwprintw(janela,2,2,"                              VEICULOS LIXEIRA                          ");
+    mvwprintw(janela,4,2,"                                                                        ");
+    // Alterando par de cor
+	wattron (janela, COLOR_PAIR(3));
+	mvwprintw(janela,4,2,"                    CUIDADO! A EXCLUSAO SERA DEFINITIVA!                ");
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "DIGITE A PLACA A EXCLUIR:_______");
+    mvwprintw(janela,9,20, "PLACA:");
+    mvwprintw(janela,10,20,"Modelo:");
+    mvwprintw(janela,11,20, "Marca:");
+	mvwprintw(janela,12,20,"Ano:");
+	mvwprintw(janela,13,20,"Kilometragem:");
+	mvwprintw(janela,14,20,"Limite Kilometragem:");
+	mvwprintw(janela,15,20,"Valor Diaria R$:");
+	mvwprintw(janela,16,20,"Valor Km R$:");
+
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaRelatorioClientesEXCLUIDOS(WINDOW *janela){
+    
+    int contlinha = 4;
+    int contagemexibicao = 1;
+    int numeracao = 1;
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+		
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tCLIENTES LIXEIRA                         ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+	
+		mvwprintw(janela,3,2,"NUMERO");
+		mvwprintw(janela,3,10,"NOME");
+		mvwprintw(janela,3,42,"CPF");
+		mvwprintw(janela,3,55,"TELEFONE");
+
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tCLIENTES LIXEIRA                         ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		mvwprintw(janela,3,2,"NUMERO");
+		mvwprintw(janela,3,10,"NOME");
+		mvwprintw(janela,3,42,"CPF");
+		mvwprintw(janela,3,55,"TELEFONE");
+			
+		// Lendo arquivos do DBCLIENTE
+		fread(&REG,sizeof(REG),1,DBCLIENTE);
+	
+		// Iniciando condicionais
+		while(!feof(DBCLIENTE)){
+		
+			if(REG.status == 0){
+				
+				if(contagemexibicao <=	15){
+					mvwprintw(janela,contlinha,2,"%d",numeracao);
+					mvwprintw(janela,contlinha,10,"%s",REG.nome);
+					mvwprintw(janela,contlinha,42,"%s",REG.cpf);
+					mvwprintw(janela,contlinha,55,"%ld",REG.tel);
+
+					wrefresh(janela);
+					contlinha++;
+					contagemexibicao++;
+					numeracao++;
+				}
+					
+				else if(contagemexibicao == 16){
+							
+				mvwprintw(janela,21,9,"Pressione qualquer tecla para continuar o relatorio");
+				wrefresh(janela);
+				getchar();
+				
+				destruirJanela(janela);
+				
+				contlinha = 4;
+				contagemexibicao = 1;
+				
+				// Criando borda da janela
+				box(janela, ACS_VLINE, ACS_HLINE);
+	
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(1));
+
+				// Printando tela
+				mvwprintw(janela,1,2,"\t\t\t\tCLIENTES LIXEIRA                         ");
+    
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(2));
+	
+				mvwprintw(janela,3,2,"NUMERO");
+				mvwprintw(janela,3,10,"NOME");
+				mvwprintw(janela,3,42,"CPF");
+				mvwprintw(janela,3,55,"TELEFONE");
+				
+				
+				mvwprintw(janela,contlinha,2,"%d",numeracao);
+				mvwprintw(janela,contlinha,10,"%s",REG.nome);
+				mvwprintw(janela,contlinha,42,"%s",REG.cpf);
+				mvwprintw(janela,contlinha,55,"%ld",REG.tel);
+
+				wrefresh(janela);
+				contlinha++;
+				contagemexibicao++;
+				numeracao++;
+				}
+								
+			}				
+		fread(&REG,sizeof(REG),1,DBCLIENTE);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaRelatorioClientesATIVOS(WINDOW *janela){
+    
+    int contlinha = 4;
+    int contagemexibicao = 1;
+    int numeracao = 1;
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+		
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tCLIENTES ATIVOS                          ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+	
+		mvwprintw(janela,3,2,"NUMERO");
+		mvwprintw(janela,3,10,"NOME");
+		mvwprintw(janela,3,42,"CPF");
+		mvwprintw(janela,3,55,"TELEFONE");
+
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tCLIENTES ATIVOS                          ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		mvwprintw(janela,3,2,"NUMERO");
+		mvwprintw(janela,3,10,"NOME");
+		mvwprintw(janela,3,42,"CPF");
+		mvwprintw(janela,3,55,"TELEFONE");
+			
+		// Lendo arquivos do DBCLIENTE
+		fread(&REG,sizeof(REG),1,DBCLIENTE);
+	
+		// Iniciando condicionais
+		while(!feof(DBCLIENTE)){
+		
+			if(REG.status == 1){
+				
+				if(contagemexibicao <=	15){
+					mvwprintw(janela,contlinha,2,"%d",numeracao);
+					mvwprintw(janela,contlinha,10,"%s",REG.nome);
+					mvwprintw(janela,contlinha,42,"%s",REG.cpf);
+					mvwprintw(janela,contlinha,55,"%ld",REG.tel);
+
+					wrefresh(janela);
+					contlinha++;
+					contagemexibicao++;
+					numeracao++;
+				}
+					
+				else if(contagemexibicao == 16){
+							
+				mvwprintw(janela,21,9,"Pressione qualquer tecla para continuar o relatorio");
+				wrefresh(janela);
+				getchar();
+				
+				destruirJanela(janela);
+				
+				contlinha = 4;
+				contagemexibicao = 1;
+				
+				// Criando borda da janela
+				box(janela, ACS_VLINE, ACS_HLINE);
+	
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(1));
+
+				// Printando tela
+				mvwprintw(janela,1,2,"\t\t\t\tCLIENTES ATIVOS                          ");
+    
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(2));
+	
+				mvwprintw(janela,3,2,"NUMERO");
+				mvwprintw(janela,3,10,"NOME");
+				mvwprintw(janela,3,42,"CPF");
+				mvwprintw(janela,3,55,"TELEFONE");
+				
+				
+				mvwprintw(janela,contlinha,2,"%d",numeracao);
+				mvwprintw(janela,contlinha,10,"%s",REG.nome);
+				mvwprintw(janela,contlinha,42,"%s",REG.cpf);
+				mvwprintw(janela,contlinha,55,"%ld",REG.tel);
+
+				wrefresh(janela);
+				contlinha++;
+				contagemexibicao++;
+				numeracao++;
+				}
+								
+			}				
+		fread(&REG,sizeof(REG),1,DBCLIENTE);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaRelatorioClientes(WINDOW *janela){
+    
+    int contlinha = 4;
+    int contagemexibicao = 1;
+    int numeracao = 1;
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+		
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tCLIENTES CADASTRADOS                      ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+	
+		mvwprintw(janela,3,2,"NUMERO");
+		mvwprintw(janela,3,10,"NOME");
+		mvwprintw(janela,3,42,"CPF");
+		mvwprintw(janela,3,55,"TELEFONE");
+
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tCLIENTES CADASTRADOS                      ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		mvwprintw(janela,3,2,"NUMERO");
+		mvwprintw(janela,3,10,"NOME");
+		mvwprintw(janela,3,42,"CPF");
+		mvwprintw(janela,3,55,"TELEFONE");
+			
+		// Lendo arquivos do DBCLIENTE
+		fread(&REG,sizeof(REG),1,DBCLIENTE);
+	
+		// Iniciando condicionais
+		while(!feof(DBCLIENTE)){
+		
+			if(REG.status == 1 || REG.status == 0){
+				
+				if(contagemexibicao <=	15){
+					mvwprintw(janela,contlinha,2,"%d",numeracao);
+					mvwprintw(janela,contlinha,10,"%s",REG.nome);
+					mvwprintw(janela,contlinha,42,"%s",REG.cpf);
+					mvwprintw(janela,contlinha,55,"%ld",REG.tel);
+
+					wrefresh(janela);
+					contlinha++;
+					contagemexibicao++;
+					numeracao++;
+				}
+					
+				else if(contagemexibicao == 16){
+							
+				mvwprintw(janela,21,9,"Pressione qualquer tecla para continuar o relatorio");
+				wrefresh(janela);
+				getchar();
+				
+				destruirJanela(janela);
+				
+				contlinha = 4;
+				contagemexibicao = 1;
+				
+				// Criando borda da janela
+				box(janela, ACS_VLINE, ACS_HLINE);
+	
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(1));
+
+				// Printando tela
+				mvwprintw(janela,1,2,"\t\t\t\tCLIENTES CADASTRADOS                      ");
+    
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(2));
+	
+				mvwprintw(janela,3,2,"NUMERO");
+				mvwprintw(janela,3,10,"NOME");
+				mvwprintw(janela,3,42,"CPF");
+				mvwprintw(janela,3,55,"TELEFONE");
+				
+				
+				mvwprintw(janela,contlinha,2,"%d",numeracao);
+				mvwprintw(janela,contlinha,10,"%s",REG.nome);
+				mvwprintw(janela,contlinha,42,"%s",REG.cpf);
+				mvwprintw(janela,contlinha,55,"%ld",REG.tel);
+
+				wrefresh(janela);
+				contlinha++;
+				contagemexibicao++;
+				numeracao++;
+				}
+								
+			}				
+		fread(&REG,sizeof(REG),1,DBCLIENTE);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaRelatorioVeiculosEXCLUIDOS(WINDOW *janela){
+    
+    int contlinha = 4;
+    int contagemexibicao = 1;
+    int numeracao = 1;
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+		
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS LIXEIRA                         ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,14,"MODELO");
+		mvwprintw(janela,3,30,"MARCA");
+		mvwprintw(janela,3,41,"ANO");
+		mvwprintw(janela,3,48,"KILOMETRAGEM");
+		mvwprintw(janela,3,62,"DIARIA R$");
+
+		DBVEICULO = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS LIXEIRA                         ");
+		
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,14,"MODELO");
+		mvwprintw(janela,3,30,"MARCA");
+		mvwprintw(janela,3,41,"ANO");
+		mvwprintw(janela,3,48,"KILOMETRAGEM");
+		mvwprintw(janela,3,62,"DIARIA R$");
+			
+		// Lendo arquivos do DBCLIENTE
+		fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+		// Iniciando condicionais
+		while(!feof(DBVEICULO)){
+		
+			if(REG.status == 0){
+				if(contagemexibicao <=	15){
+					mvwprintw(janela,contlinha,1,"%d",numeracao);
+					mvwprintw(janela,contlinha,6,"%s",REG.placa);
+					mvwprintw(janela,contlinha,14,"%s",REG.modelo);
+					mvwprintw(janela,contlinha,30,"%s",REG.marca);
+					mvwprintw(janela,contlinha,41,"%d",REG.ano);
+					mvwprintw(janela,contlinha,48,"%d",REG.km);
+					mvwprintw(janela,contlinha,62,"%.2f",REG.diaria);
+					
+					wrefresh(janela);
+					contlinha++;
+					contagemexibicao++;
+					numeracao++;
+				}
+					
+				else if(contagemexibicao == 16){
+							
+				mvwprintw(janela,21,9,"Pressione qualquer tecla para continuar o relatorio");
+				wrefresh(janela);
+				getchar();
+				
+				destruirJanela(janela);
+				
+				contlinha = 4;
+				contagemexibicao = 1;
+				
+				// Criando borda da janela
+				box(janela, ACS_VLINE, ACS_HLINE);
+	
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(1));
+
+				// Printando tela
+				mvwprintw(janela,1,2,"\t\t\t\tCLIENTES VEICULO                        ");
+    
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(2));
+	
+				// PRINTANDO
+				mvwprintw(janela,3,1, "NUM");
+				mvwprintw(janela,3,6, "PLACA");
+				mvwprintw(janela,3,14,"MODELO");
+				mvwprintw(janela,3,30,"MARCA");
+				mvwprintw(janela,3,41,"ANO");
+				mvwprintw(janela,3,48,"KILOMETRAGEM");
+				mvwprintw(janela,3,62,"DIARIA R$");;
+		
+				mvwprintw(janela,contlinha,1,"%d",numeracao);
+				mvwprintw(janela,contlinha,6,"%s",REG.placa);
+				mvwprintw(janela,contlinha,14,"%s",REG.modelo);
+				mvwprintw(janela,contlinha,30,"%s",REG.marca);
+				mvwprintw(janela,contlinha,41,"%d",REG.ano);
+				mvwprintw(janela,contlinha,48,"%d",REG.km);
+				mvwprintw(janela,contlinha,62,"%.2f",REG.diaria);
+
+				wrefresh(janela);
+				contlinha++;
+				contagemexibicao++;
+				numeracao++;
+				}
+								
+			}				
+		fread(&REG,sizeof(REG),1,DBVEICULO);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaRelatorioVeiculosATIVOS(WINDOW *janela){
+    
+    int contlinha = 4;
+    int contagemexibicao = 1;
+    int numeracao = 1;
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+		
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS ATIVOS                         ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,14,"MODELO");
+		mvwprintw(janela,3,30,"MARCA");
+		mvwprintw(janela,3,41,"ANO");
+		mvwprintw(janela,3,48,"KILOMETRAGEM");
+		mvwprintw(janela,3,62,"DIARIA R$");
+
+		DBVEICULO = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS ATIVOS                         ");
+		
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,14,"MODELO");
+		mvwprintw(janela,3,30,"MARCA");
+		mvwprintw(janela,3,41,"ANO");
+		mvwprintw(janela,3,48,"KILOMETRAGEM");
+		mvwprintw(janela,3,62,"DIARIA R$");
+			
+		// Lendo arquivos do DBCLIENTE
+		fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+		// Iniciando condicionais
+		while(!feof(DBVEICULO)){
+		
+			if(REG.status == 1){
+				if(contagemexibicao <=	15){
+					mvwprintw(janela,contlinha,1,"%d",numeracao);
+					mvwprintw(janela,contlinha,6,"%s",REG.placa);
+					mvwprintw(janela,contlinha,14,"%s",REG.modelo);
+					mvwprintw(janela,contlinha,30,"%s",REG.marca);
+					mvwprintw(janela,contlinha,41,"%d",REG.ano);
+					mvwprintw(janela,contlinha,48,"%d",REG.km);
+					mvwprintw(janela,contlinha,62,"%.2f",REG.diaria);
+					
+					wrefresh(janela);
+					contlinha++;
+					contagemexibicao++;
+					numeracao++;
+				}
+					
+				else if(contagemexibicao == 16){
+							
+				mvwprintw(janela,21,9,"Pressione qualquer tecla para continuar o relatorio");
+				wrefresh(janela);
+				getchar();
+				
+				destruirJanela(janela);
+				
+				contlinha = 4;
+				contagemexibicao = 1;
+				
+				// Criando borda da janela
+				box(janela, ACS_VLINE, ACS_HLINE);
+	
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(1));
+
+				// Printando tela
+				mvwprintw(janela,1,2,"\t\t\t\tVEICULOS ATIVOS                         ");
+    
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(2));
+	
+				// PRINTANDO
+				mvwprintw(janela,3,1, "NUM");
+				mvwprintw(janela,3,6, "PLACA");
+				mvwprintw(janela,3,14,"MODELO");
+				mvwprintw(janela,3,30,"MARCA");
+				mvwprintw(janela,3,41,"ANO");
+				mvwprintw(janela,3,48,"KILOMETRAGEM");
+				mvwprintw(janela,3,62,"DIARIA R$");;
+		
+				mvwprintw(janela,contlinha,1,"%d",numeracao);
+				mvwprintw(janela,contlinha,6,"%s",REG.placa);
+				mvwprintw(janela,contlinha,14,"%s",REG.modelo);
+				mvwprintw(janela,contlinha,30,"%s",REG.marca);
+				mvwprintw(janela,contlinha,41,"%d",REG.ano);
+				mvwprintw(janela,contlinha,48,"%d",REG.km);
+				mvwprintw(janela,contlinha,62,"%.2f",REG.diaria);
+
+				wrefresh(janela);
+				contlinha++;
+				contagemexibicao++;
+				numeracao++;
+				}
+								
+			}				
+		fread(&REG,sizeof(REG),1,DBVEICULO);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaRelatorioVeiculos(WINDOW *janela){
+    
+    int contlinha = 4;
+    int contagemexibicao = 1;
+    int numeracao = 1;
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+		
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS CADASTRADOS                     ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,14,"MODELO");
+		mvwprintw(janela,3,30,"MARCA");
+		mvwprintw(janela,3,41,"ANO");
+		mvwprintw(janela,3,48,"KILOMETRAGEM");
+		mvwprintw(janela,3,62,"DIARIA R$");
+
+		DBVEICULO = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS CADASTRADOS                     ");
+		
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,14,"MODELO");
+		mvwprintw(janela,3,30,"MARCA");
+		mvwprintw(janela,3,41,"ANO");
+		mvwprintw(janela,3,48,"KILOMETRAGEM");
+		mvwprintw(janela,3,62,"DIARIA R$");
+			
+		// Lendo arquivos do DBCLIENTE
+		fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+		// Iniciando condicionais
+		while(!feof(DBVEICULO)){
+		
+			if(REG.status == 1 || REG.status == 0){
+				if(contagemexibicao <=	15){
+					mvwprintw(janela,contlinha,1,"%d",numeracao);
+					mvwprintw(janela,contlinha,6,"%s",REG.placa);
+					mvwprintw(janela,contlinha,14,"%s",REG.modelo);
+					mvwprintw(janela,contlinha,30,"%s",REG.marca);
+					mvwprintw(janela,contlinha,41,"%d",REG.ano);
+					mvwprintw(janela,contlinha,48,"%d",REG.km);
+					mvwprintw(janela,contlinha,62,"%.2f",REG.diaria);
+					
+					wrefresh(janela);
+					contlinha++;
+					contagemexibicao++;
+					numeracao++;
+				}
+					
+				else if(contagemexibicao == 16){
+							
+				mvwprintw(janela,21,9,"Pressione qualquer tecla para continuar o relatorio");
+				wrefresh(janela);
+				getchar();
+				
+				destruirJanela(janela);
+				
+				contlinha = 4;
+				contagemexibicao = 1;
+				
+				// Criando borda da janela
+				box(janela, ACS_VLINE, ACS_HLINE);
+	
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(1));
+
+				// Printando tela
+				mvwprintw(janela,1,2,"\t\t\t\tVEICULOS CADASTRADOS                     ");
+    
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(2));
+	
+				// PRINTANDO
+				mvwprintw(janela,3,1, "NUM");
+				mvwprintw(janela,3,6, "PLACA");
+				mvwprintw(janela,3,14,"MODELO");
+				mvwprintw(janela,3,30,"MARCA");
+				mvwprintw(janela,3,41,"ANO");
+				mvwprintw(janela,3,48,"KILOMETRAGEM");
+				mvwprintw(janela,3,62,"DIARIA R$");;
+		
+				mvwprintw(janela,contlinha,1,"%d",numeracao);
+				mvwprintw(janela,contlinha,6,"%s",REG.placa);
+				mvwprintw(janela,contlinha,14,"%s",REG.modelo);
+				mvwprintw(janela,contlinha,30,"%s",REG.marca);
+				mvwprintw(janela,contlinha,41,"%d",REG.ano);
+				mvwprintw(janela,contlinha,48,"%d",REG.km);
+				mvwprintw(janela,contlinha,62,"%.2f",REG.diaria);
+
+				wrefresh(janela);
+				contlinha++;
+				contagemexibicao++;
+				numeracao++;
+				}
+								
+			}				
+		fread(&REG,sizeof(REG),1,DBVEICULO);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaRelatorioLocados(WINDOW *janela){
+    
+    int contlinha = 4;
+    int contagemexibicao = 1;
+    int numeracao = 1;
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Definindo variaveis
+	STR_LOCACAO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBLOCACAO;
+	
+	// Definindo arquivo fisico como leitura
+	DBLOCACAO = fopen("DBLOCACAO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBLOCACAO == NULL){
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+		
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS LOCADOS                     ");
+    
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,15,"CPF");
+		mvwprintw(janela,3,27,"DATALOCACAO");
+		mvwprintw(janela,3,40,"DATAENTREGA");
+		mvwprintw(janela,3,54,"QNTDIAS");
+		mvwprintw(janela,3,66,"TOTAL R$");
+
+		DBLOCACAO = fopen("DBLOCACAO.TXT","w");
+	}
+	
+	else{
+		
+		// Criando borda da janela
+		box(janela, ACS_VLINE, ACS_HLINE);
+	
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(1));
+
+		// Printando tela
+		mvwprintw(janela,1,2,"\t\t\t\tVEICULOS LOCADOS                          ");
+		
+		// Alterando par de cor
+		wattron (janela, COLOR_PAIR(2));
+		
+		// PRINTANDO
+		mvwprintw(janela,3,1, "NUM");
+		mvwprintw(janela,3,6, "PLACA");
+		mvwprintw(janela,3,15,"CPF");
+		mvwprintw(janela,3,27,"DATALOCACAO");
+		mvwprintw(janela,3,40,"DATAENTREGA");
+		mvwprintw(janela,3,54,"QNTDIAS");
+		mvwprintw(janela,3,66,"TOTAL R$");
+			
+		// Lendo arquivos do DBCLIENTE
+		fread(&REG,sizeof(REG),1,DBLOCACAO);
+	
+		// Iniciando condicionais
+		while(!feof(DBLOCACAO)){
+		
+				if(contagemexibicao <=	15){
+				mvwprintw(janela,contlinha,1,"%d",numeracao);
+				mvwprintw(janela,contlinha,6,"%s",REG.placa);
+				mvwprintw(janela,contlinha,15,"%s",REG.cpf);
+				mvwprintw(janela,contlinha,26,"%s",REG.datasaida);
+				mvwprintw(janela,contlinha,40,"%s",REG.dataentrega);
+				mvwprintw(janela,contlinha,54,"%d",REG.diaslocados);
+				mvwprintw(janela,contlinha,66,"%.2f",REG.valortotal);
+					
+					wrefresh(janela);
+					contlinha++;
+					contagemexibicao++;
+					numeracao++;
+				}
+					
+				else if(contagemexibicao == 16){
+							
+				mvwprintw(janela,21,9,"Pressione qualquer tecla para continuar o relatorio");
+				wrefresh(janela);
+				getchar();
+				
+				destruirJanela(janela);
+				
+				contlinha = 4;
+				contagemexibicao = 1;
+				
+				// Criando borda da janela
+				box(janela, ACS_VLINE, ACS_HLINE);
+	
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(1));
+
+				// Printando tela
+				mvwprintw(janela,1,2,"\t\t\t\tVEICULOS LOCADOS                     ");
+    
+				// Alterando par de cor
+				wattron (janela, COLOR_PAIR(2));
+	
+				// PRINTANDO
+				mvwprintw(janela,3,1, "NUM");
+				mvwprintw(janela,3,6, "PLACA");
+				mvwprintw(janela,3,15,"CPF");
+				mvwprintw(janela,3,27,"DATALOCACAO");
+				mvwprintw(janela,3,40,"DATAENTREGA");
+				mvwprintw(janela,3,54,"QNTDIAS");
+				mvwprintw(janela,3,66,"TOTAL R$");
+		
+				mvwprintw(janela,contlinha,1,"%d",numeracao);
+				mvwprintw(janela,contlinha,6,"%s",REG.placa);
+				mvwprintw(janela,contlinha,15,"%s",REG.cpf);
+				mvwprintw(janela,contlinha,26,"%s",REG.datasaida);
+				mvwprintw(janela,contlinha,40,"%s",REG.dataentrega);
+				mvwprintw(janela,contlinha,54,"%d",REG.diaslocados);
+				mvwprintw(janela,contlinha,66,"%.2f",REG.valortotal);
+
+				wrefresh(janela);
+				contlinha++;
+				contagemexibicao++;
+				numeracao++;
+				}
+									
+			fread(&REG,sizeof(REG),1,DBLOCACAO);
+			}	
+		}
+	
+	
+	// Fechando o arquivo
+	fclose(DBLOCACAO);
+
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaCadastrarVEICULO(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           CADASTRAR VEICULO       ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+    mvwprintw(janela,7,20, "Placa:_____________________________");
+    mvwprintw(janela,8,20, "Modelo:____________________________");
+    mvwprintw(janela,9,20, "Marca:_____________________________");
+	mvwprintw(janela,10,20,"Ano:_______________________________");
+	mvwprintw(janela,11,20,"Kilometragem:______________________");
+	mvwprintw(janela,12,20,"Limite Kilometragem:_______________");
+	mvwprintw(janela,13,20,"Valor Diaria R$:___________________");
+	mvwprintw(janela,14,20,"Valor Km R$:_______________________");   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaPesquisarVEICULO(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           PESQUISAR VEICULO       ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+
+	// Printando tela
+	mvwprintw(janela,7,20, "INSIRA A PLACA:_______");
+    mvwprintw(janela,9,20, "PLACA:");
+    mvwprintw(janela,10,20,"Modelo:");
+    mvwprintw(janela,11,20, "Marca:");
+	mvwprintw(janela,12,20,"Ano:");
+	mvwprintw(janela,13,20,"Kilometragem:");
+	mvwprintw(janela,14,20,"Limite Kilometragem:");
+	mvwprintw(janela,15,20,"Valor Diaria R$:");
+	mvwprintw(janela,16,20,"Valor Km R$:");   
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaExcluirVEICULO(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           EXCLUIR VEICULO         ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "INSIRA A PLACA:_______");
+    mvwprintw(janela,9,20, "PLACA:");
+    mvwprintw(janela,10,20,"Modelo:");
+    mvwprintw(janela,11,20, "Marca:");
+	mvwprintw(janela,12,20,"Ano:");
+	mvwprintw(janela,13,20,"Kilometragem:");
+	mvwprintw(janela,14,20,"Limite Kilometragem:");
+	mvwprintw(janela,15,20,"Valor Diaria R$:");
+	mvwprintw(janela,16,20,"Valor Km R$:");   
+   
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaEditarVEICULO(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	init_pair(3,COLOR_WHITE,COLOR_RED);
+	init_pair(4,COLOR_WHITE,COLOR_GREEN);
+	
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,2,3,"                                   ");
+    mvwprintw(janela,3,3,"           EDITAR VEICULO          ");
+    mvwprintw(janela,4,3,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,3, "INSIRA A PLACA:_______");
+    mvwprintw(janela,9,3, "PLACA:");
+    mvwprintw(janela,10,3,"Modelo:");
+    mvwprintw(janela,11,3, "Marca:");
+	mvwprintw(janela,12,3,"Ano:");
+	mvwprintw(janela,13,3,"Kilometragem:");
+	mvwprintw(janela,14,3,"Limite Kilometragem:");
+	mvwprintw(janela,15,3,"Valor Diaria R$:");
+	mvwprintw(janela,16,3,"Valor Km R$:");
+	
+    wattron (janela, COLOR_PAIR(4));
+    mvwprintw(janela,2,39,"                                   ");
+    mvwprintw(janela,3,39,"       INSIRA OS NOVOS DADOS       ");
+    mvwprintw(janela,4,39,"                                   ");
+	
+	wattron (janela, COLOR_PAIR(2));
+    mvwprintw(janela,9,39, "PLACA:__________________");
+    mvwprintw(janela,10,39,"Modelo:_________________");
+    mvwprintw(janela,11,39,"Marca:__________________");
+	mvwprintw(janela,12,39,"Ano:____________________");
+	mvwprintw(janela,13,39,"Kilometragem:___________");
+	mvwprintw(janela,14,39,"LimiteKilometragem:_____");
+	mvwprintw(janela,15,39,"Valor Diaria R$:________");
+	mvwprintw(janela,16,39,"Valor Km R$:____________");
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaLOCACAO(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	init_pair(3,COLOR_WHITE,COLOR_GREEN); 
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+    // Printando tela
+    mvwprintw(janela,3,20,"                                   ");
+    mvwprintw(janela,4,20,"           LOCACAO VEICULO         ");
+    mvwprintw(janela,5,20,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,20, "INSIRA O CPF:[___________]");
+	mvwprintw(janela,8,20, "INSIRA A PLACA:[_______]");
+    mvwprintw(janela,10,20,"Data de Saida:            ");
+    mvwprintw(janela,11,20,"Data de Entrega:__________");
+    mvwprintw(janela,12,20,"Dias Locados:_____________");
+    mvwprintw(janela,13,20,"Valor Diaria R$:          ");
+	mvwprintw(janela,14,20,"Km Inicial:               "); 
+	wattron (janela, COLOR_PAIR(3));
+	mvwprintw(janela,16,20,"                                   ");
+	mvwprintw(janela,17,20,"     VALOR TOTAL:R$                ");
+	mvwprintw(janela,18,20,"                                   ");
+	wattron (janela, COLOR_PAIR(2));
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void printTelaDEVOLUCAO(WINDOW *janela){
+    
+    // Mostrar Cursor na tela
+    curs_set(1);
+    
+    // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	init_pair(3,COLOR_WHITE,COLOR_RED);
+	init_pair(4,COLOR_WHITE,COLOR_GREEN);
+	 
+	// Criando borda da janela
+	box(janela, ACS_VLINE, ACS_HLINE);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(1));
+
+
+	// Printando tela
+    mvwprintw(janela,2,3,"                                   ");
+    mvwprintw(janela,3,3,"           DADOS LOCACAO           ");
+    mvwprintw(janela,4,3,"                                   ");
+
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(2));
+	
+	// Printando tela
+	mvwprintw(janela,7,3, "INSIRA A PLACA:_______");
+    mvwprintw(janela,9,3,"PLACA:                   ");
+    mvwprintw(janela,10,3,"CPF:                     ");
+    mvwprintw(janela,11,3,"Data Locacao:            ");
+    mvwprintw(janela,12,3,"Data Devolucao:          ");
+    mvwprintw(janela,13,3,"Dias Locados:            ");
+	mvwprintw(janela,14,3,"Km Inicial:              ");
+	mvwprintw(janela,15,3,"VALOR TOTAL:             ");
+	
+    wattron (janela, COLOR_PAIR(4));
+    mvwprintw(janela,2,39,"                                   ");
+    mvwprintw(janela,3,39,"        DADOS PARA CORRECAO        ");
+    mvwprintw(janela,4,39,"                                   ");
+	
+	wattron (janela, COLOR_PAIR(2));
+    mvwprintw(janela,9,39, "Dias Extras:______________");
+	mvwprintw(janela,10,39,"Valor MULTA Dia:R$________");
+	mvwprintw(janela,12,39,"Km Final:_________________");
+	mvwprintw(janela,13,39,"Valor MULTA Km:R$_________");
+	mvwprintw(janela,14,39,"TOTAL:R$_______");
+   
+	wattron (janela, COLOR_PAIR(2));
+   
+	// Atualizando Tela
+	wrefresh(janela);	
+}
+
+void scanStringComESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	// Declarando variavel contador de caracter adicionado
+	int cont_caracter;
+	// Declarando variavel para verificar cada letra
+	char letra = 0;
+	// Definindo par de Cor
+	wattrset(janela,COLOR_PAIR(PARCOR));
+	
+	// Ponteiro recebendo o \0 como final 
+	 *string = '\0';
+	
+	//NÃ£o ecoar
+    noecho();
+	
+	// Iniciando for com condiÃ§Ã£o de parada se der ENTER
+     for(cont_caracter = 0; letra!= 10 && letra != 9;){
+	  // Lendo o primeiro caracter
+      letra = mvwgetch(janela,pos_linha,pos_coluna);
+       
+      //mvwprintw(janela,15,25,"VALOR DA TECLA ASCII = %d",letra);
+	
+		// Condicional verifica se Ã© apenas LETRAS
+		if(((letra >= 65)&&(letra <= 90))||(letra == 32)){
+			if(cont_caracter < tamanhostring - 1 ){
+				*(string + cont_caracter) = letra;
+				mvwaddch(janela,pos_linha,pos_coluna,letra);
+				pos_coluna++;
+				cont_caracter++;
+			}
+		}
+	
+		//Condicional verifica se tecla pressionada Ã© BACKSPACE
+		if(letra == 7 && cont_caracter > 0){
+			pos_coluna --;
+			mvwaddch(janela,pos_linha,pos_coluna,'_');
+			wrefresh(janela);
+			cont_caracter--;
+		}
+	}
+	//Atualiza Tela
+	wrefresh(janela);
+	
+	// Ponteiro recebendo o \0 na ultima posicao, indicar final
+	*(string + cont_caracter)= '\0';
+	
+	// Ecoar
+	noecho();
+	
+	// Desligando cursor
+	curs_set(0);
+}
+
+void scanStringSemESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Declarando variaveis
+	int cont_caracter;
+	char letra = 0;
+	
+	// Definindo par de Cor
+	wattrset(janela,COLOR_PAIR(PARCOR));
+	
+	// Ponteiro recebendo o \0 como final 
+	 *string = '\0';
+	
+	//NÃ£o ecoar
+    noecho();
+	
+	// Iniciando for com condiÃ§Ã£o de parada se der ENTER
+     for(cont_caracter = 0; letra!= 10 && letra != 9;){
+	  
+	  // Lendo o primeiro caracter
+      letra = mvwgetch(janela,pos_linha,pos_coluna);
+	
+		// Condicional verifica se Ã© apenas LETRAS
+		if((letra >= 48)&&(letra <= 57)){
+			if(cont_caracter < tamanhostring - 1 ){
+				string[cont_caracter] = letra;
+				mvwaddch(janela,pos_linha,pos_coluna,letra);
+				pos_coluna++;
+				cont_caracter++;
+			}
+		}
+	
+		//Condicional verifica se tecla pressionada Ã© BACKSPACE
+		if(letra == 7 && cont_caracter > 0){
+			pos_coluna --;
+			mvwaddch(janela,pos_linha,pos_coluna,'_');
+			wrefresh(janela);
+			cont_caracter--;
+		}
+	}
+	
+	// Ponteiro recebendo o \0 na ultima posicao, indicar final
+	*(string + cont_caracter)= '\0';
+
+	
+	//Atualiza Tela
+	wrefresh(janela);
+	
+	// Ocultar Cursor
+	curs_set(0);
+	
+	// Ecoar
+	noecho();
+	
+}
+
+void scanStringInteiroSemESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Declarando variaveis
+	int cont_caracter;
+	char letra = 0;
+	
+	// Definindo par de Cor
+	wattrset(janela,COLOR_PAIR(PARCOR));
+	
+	// Ponteiro recebendo o \0 como final 
+	 *string = '\0';
+	
+	//NÃ£o ecoar
+    noecho();
+	
+	// Iniciando for com condiÃ§Ã£o de parada se der ENTER
+     for(cont_caracter = 0; letra!= 10 && letra != 9;){
+	  
+	  // Lendo o primeiro caracter
+      letra = mvwgetch(janela,pos_linha,pos_coluna);
+	
+		// Condicional verifica se Ã© apenas LETRAS
+		if(((letra >= 48)&&(letra <= 57))||((letra >= 65)&&(letra <= 90))){
+			if(cont_caracter < tamanhostring - 1 ){
+				string[cont_caracter] = letra;
+				mvwaddch(janela,pos_linha,pos_coluna,letra);
+				pos_coluna++;
+				cont_caracter++;
+			}
+		}
+	
+		//Condicional verifica se tecla pressionada Ã© BACKSPACE
+		if(letra == 7 && cont_caracter > 0){
+			pos_coluna --;
+			mvwaddch(janela,pos_linha,pos_coluna,'_');
+			wrefresh(janela);
+			cont_caracter--;
+		}
+	}
+	
+	// Ponteiro recebendo o \0 na ultima posicao, indicar final
+	*(string + cont_caracter)= '\0';
+
+	
+	//Atualiza Tela
+	wrefresh(janela);
+	
+	// Ocultar Cursor
+	curs_set(0);
+
+	// Nao Ecoar
+	noecho();
+	
+}
+
+void scanStringInteiroComESPACO(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, char *string){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Declarando variaveis
+	int cont_caracter;
+	char letra = 0;
+	
+	// Definindo par de Cor
+	wattrset(janela,COLOR_PAIR(PARCOR));
+	
+	// Ponteiro recebendo o \0 como final 
+	 *string = '\0';
+	
+	//NÃ£o ecoar
+    noecho();
+	
+	// Iniciando for com condiÃ§Ã£o de parada se der ENTER
+     for(cont_caracter = 0; letra!= 10 && letra != 9;){
+	  
+	  // Lendo o primeiro caracter
+      letra = mvwgetch(janela,pos_linha,pos_coluna);
+	
+		// Condicional verifica se Ã© apenas LETRAS
+		if(((letra >= 48)&&(letra <= 57))||((letra >= 65)&&(letra <= 90)) ||(letra == 32) ||(letra == 46) ){
+			if(cont_caracter < tamanhostring - 1 ){
+				string[cont_caracter] = letra;
+				mvwaddch(janela,pos_linha,pos_coluna,letra);
+				pos_coluna++;
+				cont_caracter++;
+			}
+		}
+	
+		//Condicional verifica se tecla pressionada Ã© BACKSPACE
+		if(letra == 7 && cont_caracter > 0){
+			pos_coluna --;
+			mvwaddch(janela,pos_linha,pos_coluna,'_');
+			wrefresh(janela);
+			cont_caracter--;
+		}
+	}
+	
+	// Ponteiro recebendo o \0 na ultima posicao, indicar final
+	*(string + cont_caracter)= '\0';
+
+	
+	//Atualiza Tela
+	wrefresh(janela);
+	
+	// Ocultar Cursor
+	curs_set(0);
+	
+	// Nao Ecoar
+	noecho();
+	
+}
+
+void scanLongInteiro(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, long int *inteiro){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Declarando variaveis
+	int cont_caracter;
+	char letra = 0;
+	char string[30];
+	*inteiro = 0;
+	
+	// Definindo par de Cor
+	wattrset(janela,COLOR_PAIR(PARCOR));
+	
+	//NÃ£o ecoar
+    noecho();
+	
+	// Iniciando for com condiÃ§Ã£o de parada se der ENTER
+     for(cont_caracter = 0; letra!= 10 && letra != 9;){
+	  
+	  // Lendo o primeiro caracter
+      letra = mvwgetch(janela,pos_linha,pos_coluna);
+	
+		// Condicional verifica se Ã© apenas LETRAS
+		if((letra >= 48)&&(letra <= 57)){
+			if(cont_caracter < tamanhostring - 1 ){
+				string[cont_caracter] = letra;
+				mvwaddch(janela,pos_linha,pos_coluna,letra);
+				pos_coluna++;
+				cont_caracter++;
+			}
+		}
+	
+		//Condicional verifica se tecla pressionada Ã© BACKSPACE
+		if(letra == 7 && cont_caracter > 0){
+			pos_coluna --;
+			mvwaddch(janela,pos_linha,pos_coluna,'_');
+			wrefresh(janela);
+			cont_caracter--;
+		}
+	}
+	
+	*(string + cont_caracter)= '\0';
+
+	
+	//Atualiza Tela
+	wrefresh(janela);
+
+
+	// Ponteiro recebendo o \0 na ultima posicao, indicar final
+	*inteiro = atoll(string);
+	
+	// Ocultar Cursor
+	curs_set(0);
+	
+	//Nao Ecoar
+	noecho();
+	
+}
+
+void scanInteiro(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, int *inteiro){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Declarando variaveis
+	int cont_caracter;
+	char letra = 0;
+	char string[30];
+	*inteiro = 0;
+	
+	// Definindo par de Cor
+	wattrset(janela,COLOR_PAIR(PARCOR));
+	
+	//NÃ£o ecoar
+    noecho();
+	
+	// Iniciando for com condiÃ§Ã£o de parada se der ENTER
+     for(cont_caracter = 0; letra!= 10 && letra != 9;){
+	  
+	  // Lendo o primeiro caracter
+      letra = mvwgetch(janela,pos_linha,pos_coluna);
+	
+		// Condicional verifica se Ã© apenas LETRAS
+		if((letra >= 48)&&(letra <= 57)){
+			if(cont_caracter < tamanhostring - 1 ){
+				string[cont_caracter] = letra;
+				mvwaddch(janela,pos_linha,pos_coluna,letra);
+				pos_coluna++;
+				cont_caracter++;
+			}
+		}
+	
+		//Condicional verifica se tecla pressionada Ã© BACKSPACE
+		if(letra == 7 && cont_caracter > 0){
+			pos_coluna --;
+			mvwaddch(janela,pos_linha,pos_coluna,'_');
+			wrefresh(janela);
+			cont_caracter--;
+		}
+	}
+	
+	*(string + cont_caracter)= '\0';
+
+	
+	//Atualiza Tela
+	wrefresh(janela);
+
+
+	// Ponteiro recebendo o \0 na ultima posicao, indicar final
+	*inteiro = atoll(string);
+	
+	// Ocultar Cursor
+	curs_set(0);
+	
+	//Nao Ecoar
+	noecho();
+	
+}
+
+void scanFloat(WINDOW *janela, int pos_linha, int pos_coluna, int PARCOR, int tamanhostring, float *inteiro){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Declarando variaveis
+	int cont_caracter;
+	char letra = 0;
+	char string[30];
+	*inteiro = 0;
+	
+	// Definindo par de Cor
+	wattrset(janela,COLOR_PAIR(PARCOR));
+	
+	//NÃ£o ecoar
+    noecho();
+	
+	// Iniciando for com condiÃ§Ã£o de parada se der ENTER
+     for(cont_caracter = 0; letra!= 10 && letra != 9;){
+	  
+	  // Lendo o primeiro caracter
+      letra = mvwgetch(janela,pos_linha,pos_coluna);
+	
+		// Condicional verifica se Ã© apenas LETRAS
+		if(((letra >= 48)&&(letra <= 57)) || (letra == 46) ){
+			if(cont_caracter < tamanhostring - 1 ){
+				string[cont_caracter] = letra;
+				mvwaddch(janela,pos_linha,pos_coluna,letra);
+				pos_coluna++;
+				cont_caracter++;
+			}
+		}
+	
+		//Condicional verifica se tecla pressionada Ã© BACKSPACE
+		if(letra == 7 && cont_caracter > 0){
+			pos_coluna --;
+			mvwaddch(janela,pos_linha,pos_coluna,'_');
+			wrefresh(janela);
+			cont_caracter--;
+		}
+	}
+	
+	*(string + cont_caracter)= '\0';
+
+	
+	//Atualiza Tela
+	wrefresh(janela);
+
+
+	// Ponteiro recebendo o \0 na ultima posicao, indicar final
+	*inteiro = atoll(string);
+	
+	// Ocultar Cursor
+	curs_set(0);
+	
+	//Nao Ecoar
+	noecho();
+	
+}
+
+void printMensagemERRO(WINDOW *janela, int posicaolinha, int posicaocoluna, char aviso[50]){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+	init_pair(3,COLOR_WHITE,COLOR_RED);
+	
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(3));
+    mvwprintw(janela,posicaolinha ,posicaocoluna,"%s",                                    aviso);
+	wattron (janela, COLOR_PAIR(2));
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+}
+
+void printMensagemSUCESSO(WINDOW *janela, int posicaolinha, int posicaocoluna, char aviso[50]){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+	init_pair(3,COLOR_WHITE,COLOR_GREEN);
+	
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(3));
+    mvwprintw(janela,posicaolinha ,posicaocoluna,"%s",                                    aviso);
+	wattron (janela, COLOR_PAIR(2));
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+}
+
+void printMensagemSUCESSONUMERO(WINDOW *janela, int posicaolinha, int posicaocoluna, float numero){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo Pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK);
+	init_pair(3,COLOR_WHITE,COLOR_GREEN);
+	
+    // Setando Par 1 para o nome Menu Principal
+    wattron (janela, COLOR_PAIR(3));
+    mvwprintw(janela,posicaolinha ,posicaocoluna,"%.2f",numero);
+	wattron (janela, COLOR_PAIR(2));
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+}
+
+void printDadosCLIENTEATIVO(WINDOW *janela, int posicao){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBCLIENTE,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBCLIENTE e printando
+	fread(&REG,sizeof(REG),1,DBCLIENTE);
+	
+	// Se Status for significa que o registro esta inativo
+	if(REG.status == 0){
+		printMensagemERRO(janela,13,20,"                ERRO!              ");
+		printMensagemERRO(janela,14,20,"   O CPF DIGITADO ESTA EXCLUIDO!   ");
+		printMensagemERRO(janela,15,20,"      ACESSE O MENU LIXEIRA        ");
+		}
+	
+	else{
+	mvwprintw(janela,9,25,"%s",REG.nome);
+	mvwprintw(janela,10,24,"%s",REG.cpf);
+	mvwprintw(janela,11,29,"%ld",REG.tel);
+	}
+	
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+	
+	// Atualizando tela
+	wrefresh(janela);
+	}
+}
+
+void printDadosCLIENTEINATIVO(WINDOW *janela, int posicao){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBCLIENTE,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBCLIENTE e printando
+	fread(&REG,sizeof(REG),1,DBCLIENTE);
+	
+	// Se Status for significa que o registro esta inativo
+	
+	mvwprintw(janela,9,25,"%s",REG.nome);
+	mvwprintw(janela,10,24,"%s",REG.cpf);
+	mvwprintw(janela,11,29,"%ld",REG.tel);
+	
+	
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+	
+	// Atualizando tela
+	wrefresh(janela);
+	}
+}
+
+void printDadosVEICULO(WINDOW *janela, int posicao){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBVEICULO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	
+	if(REG.status == 0){
+		printMensagemERRO(janela,17,20,"               ERRO!               ");
+		printMensagemERRO(janela,18,20,"     O VEICULO ESTA EXCLUIDO!      ");
+		printMensagemERRO(janela,19,20,"      ACESSE O MENU LIXEIRA        ");
+	}
+	
+	else{
+	// Printando dados do VEICULO
+	mvwprintw(janela,9,26,"%s",REG.placa);
+	mvwprintw(janela,10,27,"%s",REG.modelo);
+	mvwprintw(janela,11,26,"%s",REG.marca);
+	mvwprintw(janela,12,24,"%d",REG.ano);
+	mvwprintw(janela,13,33,"%d",REG.km);
+	mvwprintw(janela,14,40,"%d",REG.limitekm);
+	mvwprintw(janela,15,36,"%.2f",REG.diaria);
+	mvwprintw(janela,16,32,"%.2f",REG.valorkm);
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	// Atualizando tela
+	wrefresh(janela);
+	}
+}
+}
+
+void printDadosVEICULOINATIVO(WINDOW *janela, int posicao){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBVEICULO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	// Printando dados do VEICULO
+	mvwprintw(janela,9,26,"%s",REG.placa);
+	mvwprintw(janela,10,27,"%s",REG.modelo);
+	mvwprintw(janela,11,26,"%s",REG.marca);
+	mvwprintw(janela,12,24,"%d",REG.ano);
+	mvwprintw(janela,13,33,"%d",REG.km);
+	mvwprintw(janela,14,40,"%d",REG.limitekm);
+	mvwprintw(janela,15,36,"%.2f",REG.diaria);
+	mvwprintw(janela,16,32,"%.2f",REG.valorkm);
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	// Atualizando tela
+	wrefresh(janela);
+	
+	}
+}
+
+void printDadosDEVOLUCAO(WINDOW *janela, int posicao){
+		// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_LOCACAO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBLOCACAO;
+	
+	// Definindo arquivo fisico como leitura
+	DBLOCACAO = fopen("DBLOCACAO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBLOCACAO == NULL){
+		DBLOCACAO = fopen("DBLOCACAO.TXT","w");
+	}
+	
+	else{
+	
+	 // Criando pares de cores
+    init_pair(1,COLOR_WHITE,COLOR_CYAN);
+	init_pair(2,COLOR_WHITE,COLOR_BLACK); 
+	init_pair(3,COLOR_WHITE,COLOR_RED);
+	init_pair(4,COLOR_WHITE,COLOR_GREEN);
+	init_pair(5,COLOR_CYAN,COLOR_BLACK);
+	
+	// Alterando par de cor
+	wattron (janela, COLOR_PAIR(5));
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBLOCACAO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBLOCACAO);
+	
+	// Printando dados do VEICULO
+	mvwprintw(janela,9,10,"%s",REG.placa);
+	mvwprintw(janela,10,8,"%s",REG.cpf);
+	mvwprintw(janela,11,16,"%s",REG.datasaida);
+	mvwprintw(janela,12,19,"%s",REG.dataentrega);
+	mvwprintw(janela,13,17,"%d",REG.diaslocados);
+	mvwprintw(janela,14,15,"%d",REG.kminicial);
+	mvwprintw(janela,15,16,"%.2f",REG.valortotal);
+	
+	wattron (janela, COLOR_PAIR(2));
+	// Fechando o arquivo
+	fclose(DBLOCACAO);
+	
+	// Atualizando tela
+	wrefresh(janela);
+	
+	}
+}
+
+int buscarStatusCLIENTE(int posicao){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBCLIENTE,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBCLIENTE e printando
+	fread(&REG,sizeof(REG),1,DBCLIENTE);
+	
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+	}
+	
+	// Se Status for significa que o registro esta inativo
+	if(REG.status == 0){
+		return 0;
+		}
+	
+	else{
+		return 1;
+		}
+
+}
+
+int buscarStatusVEICULO(int posicao){
+	
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBVEICULO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	}
+	
+	// Se Status for significa que o registro esta inativo
+	if(REG.status == 0){
+		return 0;
+		}
+	
+	else{
+		return 1;
+	}
+}
+
+int buscarCPF(char *cpf){
+	
+	// Definindo variaveis
+	int cont = 0;
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+	
+	// Lendo arquivos do DBCLIENTE
+	fread(&REG,sizeof(REG),1,DBCLIENTE);
+	
+	// Iniciando condicionais
+	while(!feof(DBCLIENTE) && (strcmp(REG.cpf,cpf) != 0)){
+		cont++;
+		fread(&REG,sizeof(REG),1,DBCLIENTE);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+	
+	// Se encontrar CPF retorna a posicao
+	if(strcmp(REG.cpf,cpf) == 0){
+		return(cont);	
+	}
+	
+	// Senao ele retorna -10 que significa que nao encontrou o CPF
+	else{
+		return(-10);
+	}
+	
+	
+}
+
+int buscarPLACA(char *placa){
+	
+	// Definindo variaveis
+	int cont = 0;
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	rewind(DBVEICULO);
+	// Lendo arquivos do DBCLIENTE
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	// Iniciando condicionais
+	while(!feof(DBVEICULO) && (strcmp(REG.placa,placa) != 0)){
+		cont++;
+		fread(&REG,sizeof(REG),1,DBVEICULO);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	// Se encontrar CPF retorna a posicao
+	if(strcmp(REG.placa,placa) == 0){
+		return(cont);	
+	}
+	
+	// Senao ele retorna -10 que significa que nao encontrou o CPF
+	else{
+		return(-10);
+	}
+	
+	
+}
+
+int buscarLOCACAO(char *placa){
+	
+	// Definindo variaveis
+	int cont = 0;
+	STR_LOCACAO REG;
+	
+	strcpy(REG.placa,"");
+	// Definindo arquivo logico
+	FILE *DBLOCACAO;
+	
+	// Definindo arquivo fisico como leitura
+	DBLOCACAO = fopen("DBLOCACAO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBLOCACAO == NULL){
+		DBLOCACAO = fopen("DBLOCACAO.TXT","w");
+	}
+	
+	else{
+		
+	// Lendo arquivos do DBCLIENTE
+	fread(&REG,sizeof(STR_LOCACAO),1,DBLOCACAO);
+	
+	// Iniciando condicionais
+	while(!feof(DBLOCACAO) && (strcmp(REG.placa,placa) != 0)){
+		cont++;
+		fread(&REG,sizeof(STR_LOCACAO),1,DBLOCACAO);
+		}
+	}
+	
+	// Fechando o arquivo
+	fclose(DBLOCACAO);
+	
+	// Se encontrar CPF retorna a posicao
+	if(strcmp(REG.placa,placa) == 0){
+		return(cont);	
+	}
+	
+	// Senao ele retorna -10 que significa que nao encontrou a PLACA
+	else{
+		return(-10);
+	}
+	
+	
+}
+
+int validarCPF(char *cpf){
+
+	// Declarando variaveis
+    int i, j, digito1 = 0, digito2 = 0;
+    
+	// Condicional se CPF nÃ£o conter 11 digitos Ã© invalido
+	if(strlen(cpf) != 11)
+	   return 0;
+	 
+	
+	// Condicional se o CPF tiver todos numeros iguais Ã© invalido
+    if ((strcmp(cpf,"00000000000") == 0) || (strcmp(cpf,"11111111111") == 0) ||
+       (strcmp(cpf,"22222222222") == 0) || (strcmp(cpf,"33333333333") == 0) || 
+       (strcmp(cpf,"44444444444") == 0) || (strcmp(cpf,"55555555555") == 0) ||
+       (strcmp(cpf,"66666666666") == 0) || (strcmp(cpf,"77777777777") == 0) ||
+       (strcmp(cpf,"88888888888") == 0) || (strcmp(cpf,"99999999999") == 0)){
+        return 0;
+	}
+	
+		else{
+
+        // Digito 1 multiplica os nÃºmeros de 10 a 2 e soma os resultados dentro de digito1
+			for(i = 0, j = 10; i < strlen(cpf)-2; i++, j--)
+				digito1 += (cpf[i]-48) * j;
+				digito1 %= 11;
+				if(digito1 < 2)
+					digito1 = 0;
+				
+					else
+						digito1 = 11 - digito1;
+						// Se o digito 1 nÃ£o for o mesmo que o da validaÃ§Ã£o CPF Ã© invÃ¡lido
+						if((cpf[9]-48) != digito1)
+							return 0;
+						
+					
+			
+			
+
+        else{
+
+        // Digito 2 multiplica os nÃºmeros de 11 a 2 e soma os resultados dentro de digito2
+            for(i = 0, j = 11; i < strlen(cpf)-1; i++, j--)
+                    digito2 += (cpf[i]-48) * j;
+					digito2 %= 11;
+						if(digito2 < 2)
+							digito2 = 0;
+						
+
+						else
+							digito2 = 11 - digito2;
+							//Se o digito 2 nÃ£o for o mesmo que o da validaÃ§Ã£o CPF Ã© invÃ¡lido
+							if((cpf[10]-48) != digito2)
+								return 0;
+
+							
+						
+			}
+		}
+    return 1;
+}
+
+void excluirCLIENTE(WINDOW *janela, int posicao){
+	
+	// Variaveis
+	char opcao ='P';
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBCLIENTE, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBCLIENTE);
+	
+	// Confirmacao de exclusao
+	while((opcao != 'S') && (opcao != 'N') && (opcao != 's') && (opcao != 'n') && (REG.status != 0) ){
+		mvwprintw(janela,16,20,"DESEJA REALMENTE EXCLUIR?(S/N)_",posicao);
+		opcao = mvwgetch(janela,16,50);
+	
+	}
+
+		if((opcao == 'S') || (opcao == 's')){
+			// Setando status como inativo 0
+			REG.status = 0;
+	
+			// Posicionando no CPF buscado
+			fseek(DBCLIENTE, sizeof(REG) * (posicao), SEEK_SET);
+	
+			// Gravando no arquivo
+			fwrite(&REG, sizeof(REG), 1, DBCLIENTE); 
+
+			// Fechando o arquivo
+			fclose(DBCLIENTE);
+		
+			// Mensagem de exclusao Sucesso
+			mvwprintw(janela,19,20,"     CLIENTE EXLUIDO COM SUCESSO!     ");
+			mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+			wrefresh(janela);
+			// Parando tela
+			getchar();
+			
+		}
+	
+	else{
+	mvwprintw(janela,20,20,"           EXCLUSAO CANCELADA!    ");	
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+	getchar();
+	}
+}
+
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void excluirVEICULO(WINDOW *janela, int posicao){
+	
+	// Variaveis
+	char opcao ='P';
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO== NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBVEICULO, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBVEICULO);
+	
+	// Confirmacao de exclusao
+	while((opcao != 'S') && (opcao != 'N') && (opcao != 's') && (opcao != 'n') && (REG.status != 0) ){
+		mvwprintw(janela,17,20,"DESEJA REALMENTE EXCLUIR?(S/N)_",posicao);
+		opcao = mvwgetch(janela,17,50);
+	
+	}
+
+		if((opcao == 'S') || (opcao == 's')){
+			// Setando status como inativo 0
+			REG.status = 0;
+	
+			// Posicionando no CPF buscado
+			fseek(DBVEICULO, sizeof(REG) * (posicao), SEEK_SET);
+	
+			// Gravando no arquivo
+			fwrite(&REG, sizeof(REG), 1, DBVEICULO); 
+
+			// Fechando o arquivo
+			fclose(DBVEICULO);
+		
+			// Mensagem de exclusao Sucesso
+			mvwprintw(janela,19,20,"      VEICULO EXCLUIDO COM SUCESSO!     ");
+			mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+			wrefresh(janela);
+			// Parando tela
+			getchar();
+			
+		}
+	
+	else{
+		mvwprintw(janela,20,20,"          EXCLUSAO CANCELADA!     ");	
+		mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+		wrefresh(janela);
+		getchar();
+	}
+}
+
+
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void editarCLIENTE(WINDOW *janela, int posicao){
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	int NovoresultadoBuscaCPF;
+	int NovoresultadoValidaCPF;
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBCLIENTE, sizeof(REG) * (posicao), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBCLIENTE);
+	
+	if(REG.status == 0){
+		
+		printMensagemERRO(janela,13,20,"                ERRO!              ");
+		printMensagemERRO(janela,14,20,"   O CPF DIGITADO ESTA EXCLUIDO!   ");
+		printMensagemERRO(janela,15,20,"      ACESSE O MENU LIXEIRA        ");
+		getchar();
+		}
+	
+	else{
+	
+	printDadosCLIENTEATIVO(janela, posicao);
+
+	// Chamando Subrotina Verificar STRING NOME	
+	scanStringComESPACO(janela,16,25,2,31,REG.nome);
+																		
+	// Chamando Subrotina Verificar INTEIRO CPF
+	scanStringSemESPACO(janela,17,24,2,12,REG.cpf);						
+											
+	// Valida CPF
+	NovoresultadoValidaCPF = validarCPF(REG.cpf);
+									
+	// Verifica se CPF consta no ARQUIVO
+	NovoresultadoBuscaCPF =  buscarCPF(REG.cpf);
+										
+	// Se o resultado da FUNCAO VALIDA CPF for diferente de 1 CPF Ã© invalido
+	if(NovoresultadoValidaCPF != 1){
+		printMensagemERRO(janela,13,20,"                ERRO!              ");
+		printMensagemERRO(janela,14,20,"     O CPF DIGITADO E INVALIDO     ");
+		printMensagemERRO(janela,15,20,"       INSIRA UM CPF VALIDO!       ");
+		mvwprintw(janela,20,20,"            EDICAO CANCELADA!           ");
+		mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+		wrefresh(janela);
+		getchar();
+	}
+						
+	// Se o resultado da BUSCA CPF for diferente de -10 o CPF Existe
+	else if(NovoresultadoBuscaCPF != -10 && NovoresultadoBuscaCPF != posicao){
+		printMensagemERRO(janela,13,20,"                ERRO!              ");
+		printMensagemERRO(janela,14,20,"      O CPF DIGITADO JA EXISTE     ");
+		printMensagemERRO(janela,15,20,"         INSIRA UM NOVO CPF!       ");
+		mvwprintw(janela,20,20,"            EDICAO CANCELADA!           ");
+		mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+		wrefresh(janela);
+		getchar();
+	}
+								
+	else if(NovoresultadoBuscaCPF == -10 || NovoresultadoBuscaCPF == posicao){
+	// Chamando Subrotina Scan LONG INT TELEFONE
+	scanLongInteiro(janela,18,29,2,11,&REG.tel);
+	
+	// Posicionando no CPF buscado
+	fseek(DBCLIENTE, sizeof(REG) * (posicao), SEEK_SET);
+	
+	// Gravando no arquivo
+	fwrite(&REG, sizeof(REG), 1, DBCLIENTE); 
+
+	// Fechando o arquivo
+	fclose(DBCLIENTE);
+	
+	mvwprintw(janela,20,24,"CLIENTE EDITADO COM SUCESSO!");
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando tela
+	wrefresh(janela);
+	
+	// Esperando pressionar qualquer tecla
+	getchar();
+	}	
+	}
+
+ }
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();
+}
+
+void editarVEICULO(WINDOW *janela, int posicao){
+	// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	int NovoresultadoBuscaPLACA;
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBVEICULO, sizeof(REG) * (posicao), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBVEICULO);
+	
+	if(REG.status == 0){
+		printMensagemERRO(janela,18,20,"                ERRO!              ");
+		printMensagemERRO(janela,19,20,"     O VEICULO ESTA EXCLUIDO!      ");
+		printMensagemERRO(janela,20,20,"      ACESSE O MENU LIXEIRA        ");
+	
+		getchar();
+	}
+	
+	else{
+	
+	// Printando dados do VEICULO
+	mvwprintw(janela,9,9,"%s",REG.placa);
+	mvwprintw(janela,10,10,"%s",REG.modelo);
+	mvwprintw(janela,11,9,"%s",REG.marca);
+	mvwprintw(janela,12,7,"%d",REG.ano);
+	mvwprintw(janela,13,16,"%d",REG.km);
+	mvwprintw(janela,14,23,"%d",REG.limitekm);
+	mvwprintw(janela,15,19,"%.2f",REG.diaria);
+	mvwprintw(janela,16,15,"%.2f",REG.valorkm);
+
+	// Chamando Subrotina Verificar PLACA
+	scanStringInteiroSemESPACO(janela,9,45,2,8,REG.placa);					
+															
+	// Verifica se PLACA consta no ARQUIVO
+	NovoresultadoBuscaPLACA =  buscarPLACA(REG.placa);
+										
+	// Se o resultado da FUNCAO for vazio 
+	if(strcmp(REG.placa,"") == 0){
+		printMensagemERRO(janela,17,20,"               ERRO!               ");
+		printMensagemERRO(janela,18,20," O CAMPO PLACA NAO PODE SER VAZIO! ");
+		printMensagemERRO(janela,19,20,"       INSIRA UMA NOVA PLACA!      ");
+		mvwprintw(janela,20,20,"            EDICAO CANCELADA!           ");
+		mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+		wrefresh(janela);
+		getchar();
+	}
+						
+	// Se o resultado da BUSCA CPF for diferente de -10 o CPF Existe
+	else if(NovoresultadoBuscaPLACA != -10 && NovoresultadoBuscaPLACA != posicao){
+		printMensagemERRO(janela,17,20,"                ERRO!              ");
+		printMensagemERRO(janela,18,20,"    A PLACA DIGITADA JA EXISTE!    ");
+		printMensagemERRO(janela,19,20,"       INSIRA UMA NOVA PLACA!      ");
+		mvwprintw(janela,20,20,"         EDICAO CANCELADA!           ");
+		mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+		wrefresh(janela);
+		getchar();
+	}
+								
+	else if(NovoresultadoBuscaPLACA == -10 || NovoresultadoBuscaPLACA == posicao){
+	
+	// Chamando Subrotina Verificar STRING MODELO	
+	scanStringInteiroComESPACO(janela,10,46,2,16,REG.modelo);
+													
+	// Chamando Subrotina Verificar STRING MARCA	
+	scanStringComESPACO(janela,11,45,2,11,REG.marca);
+															
+	// Chamando Subrotina Verificar INTEIRO ANO
+	scanInteiro(janela,12,43,2,5,&REG.ano);
+									
+	// Chamando Subrotina Verificar INT KM
+	scanInteiro(janela,13,52,2,7,&REG.km);
+								
+	// Chamando Subrotina Verificar INT KM
+	scanInteiro(janela,14,58,2,7,&REG.limitekm);
+										
+	// Chamando Subrotina Verificar FLOAT DIARIA
+	scanFloat(janela,15,55,2,7,&REG.diaria);
+	
+	// Chamando Subrotina Verificar FLOAT VALORKM
+	scanFloat(janela,16,51,2,11,&REG.valorkm);
+	
+	// Posicionando no CPF buscado
+	fseek(DBVEICULO, sizeof(REG) * (posicao), SEEK_SET);
+	
+	// Gravando no arquivo
+	fwrite(&REG, sizeof(REG), 1, DBVEICULO); 
+
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	mvwprintw(janela,20,24,"CLIENTE EDITADO COM SUCESSO!");
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	// Atualizando tela
+	wrefresh(janela);
+	
+	// Esperando pressionar qualquer tecla
+	getchar();
+	}	
+	}
+
+ }
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();
+}
+
+void restaurarCLIENTE(WINDOW *janela, int posicao){
+	
+	// Variaveis
+	char opcao ='P';
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBCLIENTE, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBCLIENTE);
+	
+	// Confirmacao de exclusao
+	while((opcao != 'S') && (opcao != 'N') && (opcao != 's') && (opcao != 'n') && (REG.status != 1) ){
+		mvwprintw(janela,16,20,"DESEJA REALMENTE RESTAURAR?(S/N)_",posicao);
+		opcao = mvwgetch(janela,16,52);
+	
+	}
+
+		if((opcao == 'S') || (opcao == 's')){
+			// Setando status como inativo 0
+			REG.status = 1;
+	
+			// Posicionando no CPF buscado
+			fseek(DBCLIENTE, sizeof(REG) * (posicao), SEEK_SET);
+	
+			// Gravando no arquivo
+			fwrite(&REG, sizeof(REG), 1, DBCLIENTE); 
+
+			// Fechando o arquivo
+			fclose(DBCLIENTE);
+		
+			// Mensagem de exclusao Sucesso
+			mvwprintw(janela,19,20,"    CLIENTE RESTAURADO COM SUCESSO!     ");
+			mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+			wrefresh(janela);
+			// Parando tela
+			getchar();
+			
+		}
+	
+	else{
+	mvwprintw(janela,19,20,"       RESTAURACAO CANCELADA!           ");		
+	mvwprintw(janela,20,20,"    O CLIENTE NAO ESTA EXCLUIDO!        ");	
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+	getchar();
+	}
+}
+
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void restaurarVEICULO(WINDOW *janela, int posicao){
+	
+	// Variaveis
+	char opcao ='P';
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBVEICULO, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBVEICULO);
+	
+	// Confirmacao de exclusao
+	while((opcao != 'S') && (opcao != 'N') && (opcao != 's') && (opcao != 'n') && (REG.status != 1) ){
+		mvwprintw(janela,17,20,"DESEJA REALMENTE RESTAURAR?(S/N)_",posicao);
+		opcao = mvwgetch(janela,17,52);
+	
+	}
+
+		if((opcao == 'S') || (opcao == 's')){
+			// Setando status como ATIVO 1
+			REG.status = 1;
+	
+			// Posicionando no CPF buscado
+			fseek(DBVEICULO, sizeof(REG) * (posicao), SEEK_SET);
+	
+			// Gravando no arquivo
+			fwrite(&REG, sizeof(REG), 1, DBVEICULO); 
+
+			// Fechando o arquivo
+			fclose(DBVEICULO);
+		
+			// Mensagem de exclusao Sucesso
+			printMensagemSUCESSO(janela,18,20,"                                  ");
+			printMensagemSUCESSO(janela,19,20," VEICULO RESTAURADO COM SUCESSO!  ");
+			printMensagemSUCESSO(janela,20,20,"                                  ");
+			mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+			wrefresh(janela);
+			// Parando tela
+			getchar();
+			
+		}
+	
+	else{
+	mvwprintw(janela,19,20,"       RESTAURACAO CANCELADA!           ");		
+	mvwprintw(janela,20,20,"    O VEICULO NAO ESTA EXCLUIDO!        ");	
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+	getchar();
+	}
+}
+
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void esvaziarCLIENTE(WINDOW *janela, int posicao){
+	
+	// Variaveis
+	char opcao ='P';
+	char cpfExcluido[30];
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_CLIENTE REG;
+	
+	// Definindo arquivo logico
+	FILE *DBCLIENTE;
+	
+	// Definindo arquivo fisico como leitura
+	DBCLIENTE = fopen("DBCLIENTE.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBCLIENTE == NULL){
+		DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+	}
+	
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBCLIENTE, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBCLIENTE);
+	
+	// Confirmacao de exclusao
+	while((opcao != 'S') && (opcao != 'N') && (opcao != 's') && (opcao != 'n') && (REG.status != 1) ){
+		mvwprintw(janela,16,13,"DESEJA REALMENTE EXCLUIR DEFINITIVAMENTE?(S/N)_",posicao);
+		opcao = mvwgetch(janela,16,59);
+	
+	}
+		// Se pressionar 'S' ou 's'
+		if((opcao == 'S') || (opcao == 's')){
+			
+			// Cria um arquivo logico para manipular os dados
+			FILE *DBTEMP;
+    
+			// Criando arquivo fisico da manipulacao
+			DBTEMP = fopen("DBTEMP.TXT","w");
+	
+			// Posicionando no na posicao do registro do CPF buscado
+			fseek(DBCLIENTE, posicao * sizeof(REG), SEEK_SET);
+	
+			// Lendo Arquivo e gravando na REG
+			fread(&REG, sizeof(REG), 1, DBCLIENTE);
+			
+			// Pegando cpf a excluir
+			strcpy (cpfExcluido,REG.cpf);
+			
+			// Posicionando no inicio do arquivo DBCLIENTE
+			rewind(DBCLIENTE);
+			
+			// Lendo arquivo DBCLIENTE
+			fread(&REG, sizeof(REG), 1, DBCLIENTE);
+			
+			// Enquanto nÃ£o for final de arquivo e se o cpf buscado for igual o do arquivo ele nao grava no temp
+			while(!feof(DBCLIENTE)){
+				if(strcmp(REG.cpf,cpfExcluido) != 0){
+					fwrite(&REG, sizeof(REG), 1, DBTEMP);
+				}
+				fread(&REG, sizeof(REG), 1, DBCLIENTE);
+			}
+			
+			// Fechando arquivos
+			fclose(DBCLIENTE);
+			fclose(DBTEMP);
+			
+			// Abrindo arquivos
+			DBCLIENTE = fopen("DBCLIENTE.TXT","w");
+			DBTEMP = fopen("DBTEMP.TXT","r+");
+			
+			// Copiando aquivo DBTEMP para DBCLIENTE
+			fread(&REG, sizeof(REG), 1, DBTEMP);
+			while(!feof(DBTEMP)){
+				fwrite(&REG, sizeof(REG), 1, DBCLIENTE);
+				fread(&REG, sizeof(REG), 1, DBTEMP);
+			}
+			
+			// Fechando Arquivos e apagando arquivo DBTEMP
+			fclose(DBCLIENTE);
+			fclose(DBTEMP);
+			remove("DBTEMP.TXT");
+		
+			// Mensagem de exclusao Sucesso
+			mvwprintw(janela,19,20,"    CLIENTE EXCLUIDO COM SUCESSO!     ");
+			mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+			wrefresh(janela);
+			// Parando tela
+			getchar();
+			
+		}
+	
+	else{
+	mvwprintw(janela,19,20,"       EXCLUSAO CANCELADA!           ");		
+	mvwprintw(janela,20,20,"    O CLIENTE NAO ESTA EXCLUIDO!        ");	
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+	getchar();
+	}
+
+
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void esvaziarVEICULO(WINDOW *janela, int posicao){
+	
+	// Variaveis
+	char opcao ='P';
+	char placaExcluido[8];
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBVEICULO, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBVEICULO);
+	
+	// Confirmacao de exclusao
+	while((opcao != 'S') && (opcao != 'N') && (opcao != 's') && (opcao != 'n') && (REG.status != 1) ){
+		mvwprintw(janela,17,13,"DESEJA REALMENTE EXCLUIR DEFINITIVAMENTE?(S/N)_",posicao);
+		opcao = mvwgetch(janela,17,59);
+	
+	}
+		// Se pressionar 'S' ou 's'
+		if((opcao == 'S') || (opcao == 's')){
+			
+			// Cria um arquivo logico para manipular os dados
+			FILE *DBTEMP;
+    
+			// Criando arquivo fisico da manipulacao
+			DBTEMP = fopen("DBTEMP.TXT","w");
+	
+			// Posicionando no na posicao do registro do CPF buscado
+			fseek(DBVEICULO, posicao * sizeof(REG), SEEK_SET);
+	
+			// Lendo Arquivo e gravando na REG
+			fread(&REG, sizeof(REG), 1, DBVEICULO);
+			
+			// Pegando cpf a excluir
+			strcpy (placaExcluido,REG.placa);
+			
+			// Posicionando no inicio do arquivo DBCLIENTE
+			rewind(DBVEICULO);
+			
+			// Lendo arquivo DBCLIENTE
+			fread(&REG, sizeof(REG), 1, DBVEICULO);
+			
+			// Enquanto nÃ£o for final de arquivo e se a placa buscado for igual o do arquivo ele nao grava no temp
+			while(!feof(DBVEICULO)){
+				if(strcmp(REG.placa,placaExcluido) != 0){
+					fwrite(&REG, sizeof(REG), 1, DBTEMP);
+				}
+				fread(&REG, sizeof(REG), 1, DBVEICULO);
+			}
+			
+			// Fechando arquivos
+			fclose(DBVEICULO);
+			fclose(DBTEMP);
+			
+			// Abrindo arquivos
+			DBVEICULO = fopen("DBVEICULO.TXT","w");
+			DBTEMP = fopen("DBTEMP.TXT","r+");
+			
+			// Copiando aquivo DBTEMP para DBCLIENTE
+			fread(&REG, sizeof(REG), 1, DBTEMP);
+			while(!feof(DBTEMP)){
+				fwrite(&REG, sizeof(REG), 1, DBVEICULO);
+				fread(&REG, sizeof(REG), 1, DBTEMP);
+			}
+			
+			// Fechando Arquivos e apagando arquivo DBTEMP
+			fclose(DBVEICULO);
+			fclose(DBTEMP);
+			remove("DBTEMP.TXT");
+		
+			// Mensagem de exclusao Sucesso
+			mvwprintw(janela,19,20,"    CLIENTE EXCLUIDO COM SUCESSO!     ");
+			mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+			wrefresh(janela);
+			// Parando tela
+			getchar();
+			
+		}
+	
+	else{
+	mvwprintw(janela,19,20,"       EXCLUSAO CANCELADA!           ");		
+	mvwprintw(janela,20,20,"    O CLIENTE NAO ESTA EXCLUIDO!        ");	
+	mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+	wrefresh(janela);
+	getchar();
+	}
+
+
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void removerLOCACAO(WINDOW *janela, int posicao){
+	
+	// Variaveis
+	char placaExcluido[8];
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_LOCACAO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBLOCACAO;
+	
+	// Definindo arquivo fisico como leitura
+	DBLOCACAO = fopen("DBLOCACAO.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBLOCACAO == NULL){
+		DBLOCACAO = fopen("DBLOCACAO.TXT","w");
+	}
+	
+			
+	// Cria um arquivo logico para manipular os dados
+	FILE *DBTEMP;
+    
+	// Criando arquivo fisico da manipulacao
+	DBTEMP = fopen("DBTEMP.TXT","w");
+	
+	// Posicionando no na posicao do registro PLACA buscado
+	fseek(DBLOCACAO, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBLOCACAO);
+			
+	// Pegando cpf a excluir
+	strcpy (placaExcluido,REG.placa);
+			
+	// Posicionando no inicio do arquivo DBCLIENTE
+	rewind(DBLOCACAO);
+			
+	// Lendo arquivo DBCLIENTE
+	fread(&REG, sizeof(REG), 1, DBLOCACAO);
+			
+	// Enquanto nÃ£o for final de arquivo e se a placa buscado for igual o do arquivo ele nao grava no temp
+			while(!feof(DBLOCACAO)){
+				if(strcmp(REG.placa,placaExcluido) != 0){
+					fwrite(&REG, sizeof(REG), 1, DBTEMP);
+				}
+				fread(&REG, sizeof(REG), 1, DBLOCACAO);
+			}
+			
+			// Fechando arquivos
+			fclose(DBLOCACAO);
+			fclose(DBTEMP);
+			
+			// Abrindo arquivos
+			DBLOCACAO = fopen("DBLOCACAO.TXT","w");
+			DBTEMP = fopen("DBTEMP.TXT","r+");
+			
+			// Copiando aquivo DBTEMP para DBCLIENTE
+			fread(&REG, sizeof(REG), 1, DBTEMP);
+			while(!feof(DBTEMP)){
+				fwrite(&REG, sizeof(REG), 1, DBLOCACAO);
+				fread(&REG, sizeof(REG), 1, DBTEMP);
+			}
+			
+			// Fechando Arquivos e apagando arquivo DBTEMP
+			fclose(DBLOCACAO);
+			fclose(DBTEMP);
+			remove("DBTEMP.TXT");
+		
+			// Mensagem de exclusao Sucesso
+			mvwprintw(janela,19,20,"           VEICULO DEVOLVIDO!          ");
+			mvwprintw(janela,21,18,"Pressione qualquer tecla para continuar!");
+			wrefresh(janela);
+
+
+// Ocultar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void updateKmVEICULO(int posicao, int kmupdate){
+	
+	// Mostrar Cursor
+	curs_set(1);
+	
+	// Nao ecoar na tela
+	echo();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r+");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro do CPF buscado
+	fseek(DBVEICULO, posicao * sizeof(REG), SEEK_SET);
+	
+	// Lendo Arquivo e gravando na REG
+	fread(&REG, sizeof(REG), 1, DBVEICULO);
+
+	// Setando status como ATIVO 1
+	REG.km = kmupdate;
+	
+	// Posicionando no CPF buscado
+	fseek(DBVEICULO, sizeof(REG) * (posicao), SEEK_SET);
+	
+	// Gravando no arquivo
+	fwrite(&REG, sizeof(REG), 1, DBVEICULO); 
+
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	}
+// Mostrar Cursor
+curs_set(0);
+	
+// Nao ecoar na tela
+noecho();	
+}
+
+void datasistema(char *datasistema){
+	
+	char mes[4], dia[3], ano[5];
+
+    strcpy(mes, ""); //limpa a string mes
+
+    strcpy(dia, ""); //limpa a string dia
+
+    strcpy(ano, "");//limpa a string ano
+
+    strncat(mes, __DATE__ , 3); //a partir da posiÃ§Ã£o zero do vetor da data copie 3 caracteres =  Nov
+
+    strncat(dia, __DATE__ +4, 2);//a partir da posiÃ§Ã£o 4 do vetor da data copie 2 caracteres = 27
+
+    strncat(ano, __DATE__ +7, 4);//a partir da posiÃ§Ã£o 7 do vetor da data copie 4 caracteres = 2013
+	
+	//strupr(mes);
+	 
+	if(strcmp(mes,"FEB") == 0){
+		 strcpy(mes,"FEV");
+		} 
+	
+	else if(strcmp(mes,"APR") == 0){
+		 strcpy(mes,"ABR");
+		}
+		
+	else if(strcmp(mes,"MAY") == 0){
+		 strcpy(mes,"MAI");
+		}
+	
+	else if(strcmp(mes,"AUG") == 0){
+		 strcpy(mes,"AGO");
+		}
+		
+	else if(strcmp(mes,"SEP") == 0){
+		strcpy(mes,"SET");
+	
+	}
+	
+	else if(strcmp(mes,"OCT") == 0){
+		 strcpy(mes,"OUT");
+		}	
+		
+	else if(strcmp(mes,"DEC") == 0){
+		 strcpy(mes,"DEZ");
+		} 
+		
+		
+	sprintf (datasistema,"%s %s %s", dia, mes, ano);
+	
+}
+
+float buscarValorDiariaVEICULO(int posicao){
+		// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBVEICULO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	}
+	return(REG.diaria);
+	
+}
+
+float buscarKmInicialVEICULO(int posicao){
+		// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBVEICULO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	}
+	return(REG.km);
+	
+}
+
+float buscarMultaKmVEICULO(int posicao){
+		// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBVEICULO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	}
+	return(REG.valorkm);
+	
+}
+
+float buscarLimiteKmVEICULO(int posicao){
+		// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_VEICULO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBVEICULO;
+	
+	// Definindo arquivo fisico como leitura
+	DBVEICULO = fopen("DBVEICULO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBVEICULO == NULL){
+		DBVEICULO = fopen("DBVEICULO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBVEICULO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBVEICULO);
+	
+	// Fechando o arquivo
+	fclose(DBVEICULO);
+	
+	}
+	return(REG.limitekm);
+	
+}
+
+float calculaValorTotalLOCACAO(float valordiaria, int diaslocados){
+
+	float totalpagar = 0;
+
+	totalpagar = diaslocados * valordiaria;
+	
+	return (totalpagar);
+}
+
+float buscarValorTotalLOCACAO(int posicao){
+		// Mostrar Cursor
+	curs_set(0);
+	
+	// Nao ecoar na tela
+	noecho();
+	
+	// Definindo variaveis
+	STR_LOCACAO REG;
+	
+	// Definindo arquivo logico
+	FILE *DBLOCACAO;
+	
+	// Definindo arquivo fisico como leitura
+	DBLOCACAO = fopen("DBLOCACAO.TXT","r");
+	
+	// Condicional se o arquivo nao existir ele cria
+	if(DBLOCACAO == NULL){
+		DBLOCACAO = fopen("DBLOCACAO.TXT","w");
+	}
+	
+	else{
+	
+	// Posicionando no na posicao do registro da PLACA buscada
+	fseek(DBLOCACAO,posicao * sizeof(REG), 0);
+	
+	// Lendo arquivos do DBVEICULO e printando
+	fread(&REG,sizeof(REG),1,DBLOCACAO);
+	
+	// Fechando o arquivo
+	fclose(DBLOCACAO);
+	
+	}
+	return(REG.valortotal);
+	
+}
+
+float calcularValorTotalDEVOLUCAO(float totalanterior, int diasextras, float valormultadia, int kminicial, int kmfinal, int kmlimite, float valormultakm){
+	
+	float valortotal;
+	float calcdias;
+	float calckm;
+	
+
+	calcdias = diasextras * valormultadia;
+	calckm = (kmfinal - kminicial) - kmlimite;
+	if(calckm < kmlimite){
+		valortotal = calcdias + totalanterior; 
+	}
+	
+	else if(calckm >= kmlimite){
+	calckm = ((kmfinal - kminicial) - kmlimite) * valormultakm;
+	valortotal = totalanterior + calcdias + calckm;
+	}	
+	
+return(valortotal);
+}
